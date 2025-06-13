@@ -938,12 +938,69 @@ This is just a GUI to enter the range for a target function to run a scan.\\
 
 \ounih{Lattice calculations}{opticplot} 
 
-Linear beam optics includes closed orbit finder \code{>CloseOrbit}, periodic solution for coupled and uncoupled lattices \code{>NormalMode, FlatPeriodic}, propagation through elements \code{>Lattel} and full linear optics including integrals \code{>LinOp} with several options for periodic, symmetric, single pass forward, backward, from marker calculations \code{>OpticCalc}. Plot routines show beta functions and dispersions \code{>PlotBeta}, or orbit, envelopes and apertures \code{>PlotOrbit, PlotEnv, PlotApertures}, or magnetic fields \code{>PlotMag}. Lattice parameters are shown in a table \code{>FillBeamTab, FillBetaTab} and several output files can be printed \code{>Print...}\\
+\desc{Linear beam optics includes closed orbit finder, periodic solution for coupled and uncoupled lattices, and full linear optics including integrals with several options for periodic, symmetric, single pass forward, backward, from marker calculations. 
 
+This unit has handles to the plot areas and tables of the optics and orbit/injection GUIs, \ogui{opticview} and \ogui{OPAorbit}.
+Plot routines show beta functions and dispersions, or orbit, envelopes and apertures, or magnetic fields. Lattice and local beam parameters are filled to the tables, and several output files can be printed. 
+}
 
 
 \uses{
  \ouni{OPAElements}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+
+\pvar{
+Several variables to be used by \ogui{opticview}, \ogui{Opticstart} etc. were defined in the interface section, i.e. as public, for convenience (i.e. lazyness). Most of them are flags to control the flow. Few of them may require an explanation:
+
+\unico{vp} defines a \guifco{Vgraph} object for the optics GUI \ogui{opticview}, which creates it at start. Later, \ogui{opticplot} itself will plot to \unico{vp}. The orbit/injection GUI \ogui{OPAorbit}, however, defines its own plot areas of class \guifco{asfigure} and only gets the data from \ouni{opticplot}. The reason for this different solutions was partly historical, partly due to the higher complexity of the \ogui{opticview} plot.
+
+\unico{Opval} is a dynamic 2-dimensional array of \code{OpvalType} to save optics parameters after each lattice element and for up to three calculations, e.g. for on- and $\pm$off-momentum.
+
+\unico{Obeam} is a 3-element array to save beam parameters like tunes, emittances etc. for up to three calculations.
+}
+ 
+\ppro{
+\unico{allocOpval} allocates the array of optics values.
+
+\unico{shiftOpval} shifts up the optics values for one solution the next row in the lattice; this is used to save a solution for comparison with a newer one.
+
+\unico{setTabHandle} receives a handle to the table in \ogui{opticview} in order to fill in optics results
+
+\unico{setTunePlotHandle} receives a handle to the tune diagram GUI \ogui{OPAtune} in order to plot working points.
+
+\unico{setOrbitHandle} receives a handle to the \ogui{OPAorbit} GUI. Actually it is only needed to send it a \code{repaint} event, it will then get and plot the data from \ouni{opticsplot}.\\
+
+\underline{Beam dynamics procedures:}
+
+\unico{OptInit} initializes all variables (beta functions, transfer matrix etc.) to be used for the optics calculations.
+
+\unico{Lattel} is the basic procedure for all calculations. It propagates the optical functions through one lattice element. Input is the lattice index and a mode flag telling it what to include in the calculation (integrals, misaligmnents etc). 
+
+\unico{ClosedOrbit} tries to find the fixpoint of the one-turn map, i.e. the closed orbit, by a Newton-Raphson root finder with the {\em local} transfermatrix as Jacobian. It returns a flag to tell if it failed or not. For on-momentum calculation without misalignments, it is trivial and the orbit is on-axis. Else down-feeds from non-linearities affect the local transfermatrix and require some iterations, usually only a few since the method converges quadratically.
+
+\unico{Periodic} tries to find the periodic optics solution, if the closed orbit was found. Depending on coupling it switches to two procedures:
+
+\unico{Flatperiodic} calculates the periodic solution for uncoupled, i.e. flat lattices without coupling elements, where horizontal and vertical dimension can be calculated independently, and vertical dispersion is always zero. The algorithm is described in Klaus Wille's book \cite{kwille}.
+
+\unico{NormalMode} calculates the periodic solution for coupled lattices using the Edward-Teng formalism in the version of Sagan and Rubin and implemented as described in \cite{VZAS}. Section 2 of the "inside OPA" guide \cite{inside} gives a summary. If successful the procedure returns the normal mode beta functions, which have no physical meaning and exist in an uncoupled system (coordinates $a,b$) and the coupling matrix, which translates the normal mode system to the real coordinate system (coordinates $x,y$). It further returns the 4-vector of dispersions and the lattice tunes.
+
+\unico{Symmetric} calculates the symmetric solution with 
+$\alpha_x=\alpha_y=D_x'=0$ and works only for uncoupled lattices. It is rarely used and not well tested. The algorithm is also described in \cite{kwille}.
+
+\unico{LinOp} is a {\em private} procedure to propagate the beta functions through the lattice and save the values after each element to the \unico{Opval} array by calling procedure \unico{StoVar}. Usually it would start at the begin of the lattice with initial conditions from the periodic solution or entered manually. But it may also start at an optics marker and propagate forward and backward to end and start of lattice. Care is taken to handle inverted elements and derivatives of optical parameter and to sum up integrals correctly. Depending on the input flag \code{latmode} only the beta functions and dispersions are calculated or chromaticities and radiation integrals are calculated too by passing the flag to the \unico{Lattel} routine, which passes it further to the element propagation routines.
+
+\unico{OpticCalc} performs the full linear optics calculation by calling \unico{ClosedOrbit}, \unico{Periodic} and \unico{LinOp}. Afterwards, the working point is plotted to the tune diagram (in case of periodic solution only) and the table in \ogui{optiview} is filled calling procedures \unico{FillBeamTab} and \unico{FillBetaTab}. \\
+\todo{The code is a bit messy due to the different cases it has to handle~-- periodic/symmetric solution or forward/backward from an optics marker, how many calculations to do, on- or off-momentum.} 
+
+\unico{OrbitCalc} is a simplified version of \unico{OpticCalc} used by \ogui{OPAorbit} for calculation of orbit only. An additional feature is the ability to do several turns which is useful in injection simulation.\\
+
+\underline{Plot procedures:}
+
+
+
+\code{>PlotOrbit, PlotEnv, PlotApertures},\code{>PlotMag}.
+\code{>Print...}\\
+
+}
 
 \ounih{Element calculations}{OPAElements} 
 
@@ -1169,6 +1226,7 @@ In the present (\today) version the unit contains, among others, three procedure
 \bibitem{semver}Semantic versioning, \url{https://semver.org/}
 \bibitem{euler}G. Slabaugh, Computing Euler angles from a rotation matrix, \url{https://eecs.qmul.ac.uk/~gslabaugh/publications/euler.pdf}.
 \bibitem{VZAS}V. Ziemann and A. Streun, Equilibrium parameters in coupled storage ring lattices and practical applications, Phys. Rev. Accel. Beams, 25, 050703, 2022. \biburl{https://link.aps.org/doi/10.1103/PhysRevAccelBeams.25.050703}.
+\bibitem{kwille}K. Wille, Physik der Teilchenbeschleuniger und Synchrotronstrahlungsquellen, 1996.
 \bibitem{EDTENG} D. Edward and L.Teng, {\em Parametrization of linear coupled motion in periodic
 systems,} IEEE Trans.Nucl.Sci. 20, 885 (1973).
 \bibitem{SAGAN}D. Sagan, D. Rubin, {\em Linear Analysis of coupled lattices,} Physical Review Special

@@ -30,6 +30,7 @@
 \newcommand{\evcodf}[2]{\ofld{#1} $\rightarrow$ \guifco{#2}}
 \newcommand{\evcodxf}[2]{\ofldx{#1}~$\rightarrow$ \guifco{#2}}
 \newcommand{\prcod}[2]{\opauni{#1}$>$\unico{#2}}
+\newcommand{\vrcod}[2]{\opauni{#1}:\unico{#2}}
 \newcommand{\grcod}[2]{\opagui{#1}$>$\guico{#2}}
 \newcommand{\gfcod}[2]{\opaguif{#1}$>$\guifco{#2}}
 
@@ -62,8 +63,8 @@
 \newcommand{\pvar}[1]{\subsubsection*{Public constants, types and variables} #1}
 \newcommand{\ppro}[1]{\subsubsection*{Public procedures} #1}
 
-\newcommand{\todo}[1]{{\color{red}\em #1}}
-\newcommand{\feature}[1]{{\color{cadmiumgreen}\em #1}}
+\newcommand{\todo}[1]{{\color{red} #1}}
+\newcommand{\feature}[1]{{\color{cadmiumgreen} #1}}
 
 \newcommand{\biburl}[1]{{\small{\tt #1}}}
 
@@ -103,7 +104,7 @@
 \rule{\hsize}{1pt}
 
 \section{How to use this document}
-This document is intended to support program developers, who want to maintain the existing OPA code, or to rewrite it in another environment, or to extract useful parts for integration into other codes. It
+This document is intended to support program developers, who want to maintain the existing OPA code, or to rewrite it in another environment, or to extract useful parts for integration into other codes.
 
 When reading this document, the source code may be examined in parallel, preferably in the Lazarus IDE. In order to see how the code works, OPA may be executed or the tutorial \cite{tutorial} may be consulted. Further information on using OPA is found in the user guide \cite{userguide} and the underlying physics is outlined in \cite{inside}.
 
@@ -113,9 +114,9 @@ Pieces of code are shown in \code{typewriter style}.
 
 A GUI or a frame has a list of \guico{actions} corresponding to the event handlers of its components, for example a button to be pressed. The pure Pascal units are passive, they contain a set of public \unico{procedures} which are called from the GUIs. Frames too may contain public \guifco{procedures}. Thus in this documentation, action lists are given for the GUIs and frames, and lists of public procedures for the frames and units. All modules may offer public variables, here coloured \guico{x}, \guifco{y}, \unico{z} for GUIs, frames, units.
 
-GUI components accept user input and/or launch events. Some have captions, like \ofld{Buttons}, others not, like for example a \ofldx{plot area} responding to mouse clicks. The general scheme is \evcod{component}{event handler}. Event handlers may call private procedures of the GUI or public procedures from units as listed in the \guico{uses} section. For the units \prcod{unit}{procedure} refers to a procedure in a unit.
+GUI components accept user input and/or launch events. Some have captions, like \ofld{Buttons}, others not, like for example a \ofldx{plot area} responding to mouse clicks. The general scheme is \evcod{component}{event handler}. Event handlers may call private procedures of the GUI or public procedures from units as listed in the \guico{uses} section. For the units \prcod{unit}{procedure} refers to a procedure in a unit and \vrcod{unit}{variable} to a public variable..
 
-In this document, \todo{red italics give informations about bugs and other problems and/or suggestions for future improvements.} \feature{Green italics mention particular features which distinguish OPA from other beam dynamics and should be preserved.}
+\todo{Red text gives informations about bugs and other problems and/or suggestions for future improvements.} \feature{Green text mentions particular features which distinguish OPA from other beam dynamics codes and should be preserved.}
 
 Questions may be adressed to the author at \url{mailto:psi@andreas-streun.de}.
 
@@ -176,11 +177,11 @@ Name & class & Purpose & Size \\ \hline
 \ogui{OpticEnvel} & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
 \ogui{OpticTune} & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
 \ogui{OpticWOMK} & \guico{TWOMK} & write optics markers & 125 \\
-\ogui{OpticMatch} & \guico{} & linear optics matching & 1457 \\
-\ogui{OpticMatchScan} & \guico{} & parameter scan & 119 \\
 \ouni{opticplot} & & linear beam dynamics calculations & 2840 \\
 \ouni{OPAElements} & & element propagation calculations & 2387 \\
-\ogui{OPAtune} & \guico{} & show the tune diagram & 634 \\
+\ogui{OpticMatch} & \guico{TMatch} & linear optics matching & 1457 \\
+\ogui{OpticMatchScan} & \guico{TsetMatchScan}& parameter scan & 119 \\
+\ogui{OPAtune} & \guico{TTunePlot} & show the tune diagram & 634 \\
 \hline
 \ogui{OPAmomentum} & \guico{} & momentum dependence and optimization & 949 \\
 \ouni{MomentumLib} & \guico{} & momentum dependent calculations & 480 \\
@@ -774,7 +775,7 @@ If the right mouse button is pressed, the optical function values at this locati
 
 \evcod{TuneMatrix}{buttuneClick} launches the GUI \ogui{OpticTune} to smoothly adjust the lattice tune within a small range by changing all quadrupoles.
 
-\evcod{Matching}{butmatClick} launches the GUI \ogui{OpticMatch} for automatic matching of optical functions to target values by changing selected knobs (i.e. magnet strengths). Since some magnets may be connected to knobs, a handle to all knobs is passed that the maching program may set them to new values.
+\evcod{Matching}{butmatClick} launches the GUI \ogui{OpticMatch} for automatic matching of optical functions to target values by changing selected knobs (i.e. magnet strengths). Since some magnets may be connected to knobs, a handle to all knobs is passed that the matching program may set them to new values.
 
 \evcod{Write OMK}{butwomkClick} launches a small GUI \ogui{OpticWOMK} to select the optics markers to overwrite with the current optics data. (An optics marker is an element to store local optics data, which may be used as a starting point for forward/backward optics calculations.)
 
@@ -882,7 +883,7 @@ If the knob is connected to a variable, changing it may affect other knobs conne
 }
 
 \act{
-\evcodx{Beta, Envelope, Mag. field radio buttons}{rmodClick} selects one of the three plot modes (Betas, Envelopes, Magnetic fields), unhides the corresponding panel and hides the two other, and enables options depending on flags: one flag is coupling, another flag is for using equilibrium emittances or input emittances. Further the data table on the right side of \ogui{opticview} is configured, and table and plot are updated calling procedures \prcod{InitBetaTab} and \prcod{FillBetaTab} in unit \ouni{opticplot}. Then the private procedure \prcod{MakePlot} sets plot ranges etc. and calls the corresponding plot procedures \prcod{PlotBeta}, \prcod{EnvPlot} or \prcod{MagPLot} in \ouni{opticplot}.
+\evcodx{Beta, Envelope, Mag. field radio buttons}{rmodClick} selects one of the three plot modes (Betas, Envelopes, Magnetic fields), unhides the corresponding panel and hides the two other, and enables options depending on flags: one flag is coupling, another flag is for using equilibrium emittances or input emittances. Further the data table on the right side of \ogui{opticview} is configured, and table and plot are updated calling procedures \prcod{opticplot}{InitBetaTab,FillBetaTab}. Then the private procedure \prcod{MakePlot} sets plot ranges etc. and calls the corresponding plot procedures \prcod{opticplot}{PlotBeta,EnvPlot,MagPLot}.
 
 \evcod{Apply}{butgoClick} also calls for a new plot and updates the data table.
 
@@ -922,26 +923,11 @@ This small GUI launched by \ogui{opticview} calculates a $2\times 2$ sensitivity
 
 
 
-\oguih{Linar matching}{OpticMatch} 
-
-Matching of linear optics using a Newton-Raphson minimizer: Optics parameters to be adjusted with target values and at least the same number of knobs (e.g. quadrupole strenght, variables etc.) are selected, then the minimizer proceeds using the square matrix of most sensitive knobs, which is recalculated after each steps to take into account non-linearities. Reduced step size can be set for better convergence. It is possible to run a scan over some range of a target value.\\
-\todo{The matching procedure is quit old and restricted to uncoupled lattices. A more elaborate minimizer also including limits for the knobs should be implemented.}\\
-
-
-\uses{\ouni{opticplot}, \oguif{knobframe}, \ogui{OpticMatchScan}, \ouni{OPAglobal},  \oguif{../com/asfigure}, \ouni{../com/asaux}} 
-
-\oguih{Parameter scan}{OpticMatchScan}
-This is just a GUI to enter the range for a target function to run a scan.\\
-
-\uses{\ouni{opticplot}, \ouni{OPAglobal}, \ouni{../com/asaux}} 
-
-
 \ounih{Lattice calculations}{opticplot} 
 
-\desc{Linear beam optics includes closed orbit finder, periodic solution for coupled and uncoupled lattices, and full linear optics including integrals with several options for periodic, symmetric, single pass forward, backward, from marker calculations. 
-
+\desc{Linear beam optics includes closed orbit finder, periodic solution for coupled and uncoupled lattices, and radiation integrals. 
 This unit has handles to the plot areas and tables of the optics and orbit/injection GUIs, \ogui{opticview} and \ogui{OPAorbit}.
-Plot routines show beta functions and dispersions, or orbit, envelopes and apertures, or magnetic fields. Lattice and local beam parameters are filled to the tables, and several output files can be printed. 
+Plot routines show beta functions and dispersions, or orbit, envelopes and apertures, or magnetic fields. Lattice and local beam parameters are filled into the tables, and several output files can be printed. 
 }
 
 
@@ -949,7 +935,7 @@ Plot routines show beta functions and dispersions, or orbit, envelopes and apert
  \ouni{OPAElements}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
 
 \pvar{
-Several variables to be used by \ogui{opticview}, \ogui{Opticstart} etc. were defined in the interface section, i.e. as public, for convenience (i.e. lazyness). Most of them are flags to control the flow. Few of them may require an explanation:
+Several variables used by \ogui{opticview}, \ogui{Opticstart} etc. are defined in the interface section, i.e. as public, for convenience (i.e. lazyness). Most of them are flags to control the flow. Few of them may require an explanation:
 
 \unico{vp} defines a \guifco{Vgraph} object for the optics GUI \ogui{opticview}, which creates it at start. Later, \ogui{opticplot} itself will plot to \unico{vp}. The orbit/injection GUI \ogui{OPAorbit}, however, defines its own plot areas of class \guifco{asfigure} and only gets the data from \ouni{opticplot}. The reason for this different solutions was partly historical, partly due to the higher complexity of the \ogui{opticview} plot.
 
@@ -991,37 +977,167 @@ $\alpha_x=\alpha_y=D_x'=0$ and works only for uncoupled lattices. It is rarely u
 \unico{OpticCalc} performs the full linear optics calculation by calling \unico{ClosedOrbit}, \unico{Periodic} and \unico{LinOp}. Afterwards, the working point is plotted to the tune diagram (in case of periodic solution only) and the table in \ogui{optiview} is filled calling procedures \unico{FillBeamTab} and \unico{FillBetaTab}. \\
 \todo{The code is a bit messy due to the different cases it has to handle~-- periodic/symmetric solution or forward/backward from an optics marker, how many calculations to do, on- or off-momentum.} 
 
-\unico{OrbitCalc} is a simplified version of \unico{OpticCalc} used by \ogui{OPAorbit} for calculation of orbit only. An additional feature is the ability to do several turns which is useful in injection simulation.\\
+\unico{OrbitCalc} is a simplified version of \unico{OpticCalc} used by \ogui{OPAorbit} for calculation of orbit only. An additional feature is the ability to do several turns which is useful in injection simulation.
+
+\unico{MatchValues} is a function returning an array of type \vrcod{OPAglobal}{MatchFuncType} containing optics values at the begin and end of the lattice, and optionally, at an intermediate point. It is used by \ouni{OpticMatch} for matching optics parameters to target values.\\
 
 \underline{Plot procedures:}
 
+\unico{SliceCalcN} calculates optical functions {\em inside} an element by subdividing it into slices of a length corresponding to one pixel on the screen. Calculations start at each lattice element, where optical functions have been before calculated by \unico{Linop} and saved in the \unico{Opval} array. Elements outside the plot window are skipped, if the user zoomed in to a part of the lattice in \ogui{opticview}. The variable \vrcod{OPAglobal}{CurvePlot} stores the start and end point and the number of slices and their length, and the optical functions at the slices are saved in the variable \vrcod{OPAglobal}{Curve}, which is a linked list of pointers for storing optical data. Procedure \vrcod{OPAElements}{SlicingN} performs these calculation and generates the curve.\\
+\feature{It's a unique feature of OPA to display the optical functions at pixel resolution. This allows to export nice plots ready for publication.}
 
+\unico{PlotBeta} displays the beta functions and dispersions. The procedure is lengthy due to the various plot modes as selected in \ogui{OpticEnvel}, but in principle it is relatively simple: After setting the ranges, the internal procedure \unico{BetaCurveN} is called to generate the curves calling \unico{SliceCalcN} and to plot them. More than one curve for each function is plotted if a previous curve was saved for comparison, or if a $0,\pm\Delta p/p$ calculations was done.
 
-\code{>PlotOrbit, PlotEnv, PlotApertures},\code{>PlotMag}.
-\code{>Print...}\\
+\unico{PlotEnv} displays the envelope functions. Before, they need to be calculated. Therefore several arrays are created to hold all the data for the orbit and the different contributions to the beam size (from dispersion, from coupling). They are calculated either using input or equilibrium emittances and energy spread as selected in \ogui{OpticEnvel}. Also the apertures are plotted calling procedure \unico{PlotApertures}.
 
+\unico{PlotMag} displays the pole-tip field of the magnets. No slicing is done since the magnets have no longitudinal variation of the fields (longitudinal gradient bends are approximated by a stack of dipoles). In case of the solenoid, the longitudinal field is shown. For combined function magnets only dipole and quadrupole field is used for pole-tip field calculation. The reference radius as set in \ogui{OpticEnvel} is assumed to be the same for all magnets.
+
+\unico{PlotOrbit} is used by the orbit \& injection GUI \ogui{OPAorbit} only, whereas the other plot procedures are only used by the optics GUI \ogui{opticview}. \ogui{OPAorbit} does the plotting by itself, so this plot procedure just sends a repaint event to its formhandle.\\
+
+\underline{Output}
+
+\unico{FillBeamTab} and \unico{FillBetaTab} write equilibrium beam parameters and beta functions at the location which was right-clicked (see above: \ogui{opticview} action \evcodx{plot area}{pwMouseDown}) to the table on the right side of \ogui{opticview}. In envelope mode, beam sizes, correlations and beam tilt angles are calculated and displayed. 
+
+\unico{Print\dots} These procedures print various data to files: lattice data in text or html format, beta functoins curves, magnet and radiation data.
 }
 
 \ounih{Element calculations}{OPAElements} 
 
-A beam as defined by its orbit, (normal mode) beta functions, dispersion and coupling matrix is propagated through an element \code{>Driftspace,Quadrupole...}
-
-Internally the procedures \code{>MCC\_prop} and \code{>MBD\_prop} perform the transfer for coupling and non-coupling eleements.
-
-Depending on flags set, Kickers, non-linearities, misalignments etc. are switched on or off,  and radiation integrals, path length etc. are calculated.
-
-For display OPA subdivides elements in slices, where the slice length corresponds to one pixel on the screen. This is handled by the procedures \code{>slice...} defining matrices for the slices and for the skipped parts (i.e. out of view range) of the element.
-
-Internal private procedures calculate phase advances and transform between physical, normal modes and normalized normal mode coordinates.\\
+\desc{This unit contains the procedures to propagate optical parameters through the different elements in the lattice. They all receive the variable \unico{mode} telling them what to include in the calculation, by evaluating \prcod{OPAglobal}{switch}. Most elements receive the varialbe \unico{idir} to set forward or reverse orientation of the element (for example important for a dipole with different edge angles). All other parameters are explained in the user guide \cite{userguide}. 
+The flags \unico{UseSext,UsePulsed} in \ouni{OPAglobal} switch on/off non-linearities and kickers. Coupled calculation is selected by the element procedures. Another set of procedures performs the sliced calculations for thick elements to provide data in pixel-resolution for a nice display. 
+}
 
 \uses{\ouni{OPAglobal}, \ouni{mathlib}}
+
+\subsubsection*{Procedures}
+
+This section tries to list the procedures in a logical order (not as they apppear in the file) for best understanding. Some are public, to be called by \ouni{opticplot}, others are private and commented out in the \code{INTERFACE} section of the file.\\
+
+\underline{Beam propagation}
+
+\unico{Propagate} receives the transfermatrix of an element and a flag on coupling to propagate the optical functions from start to end of the element using two procedures:
+
+\unico{MCC\_prop} proceeds {\em with} coupling to propagate the normal mode beta functions and the coupling matrix. In the beginning, on- and off-diagonal $2\times 2$ submatrices are extracted from the $5\times 5$ transfer matrix, and a test is done, if a mode flip will happen. Then follows a longer section to handle a possible mode flip. \todo{This section is partly experimental and needs further elaboration. It does not work correctly with regard to tunes and integrals in all cases.} At the end follows the normal case which works reliably with weak coupling. Phase advances are calculated by procedure \unico{PhaseAdvance} and added to the ring tunes, and the dispersion vector is propagated, which always works.
+
+\unico{MBD\_prop} proceeds {\em without} coupling where the transfer matrix is known to be block-diagonal. Nevertheless, possible coupling in the beam has to be propagated too by transforming the coupling matrix, which may have non-zero elements in this case. 
+
+\unico{PropForward} just copies optics parameters after propagation (suffix 2) to parameters before propagation (suffix 1) in order to continue with the next element.
+
+\unico{PhaseAdvance} calculates the block-diagonal normalized normal mode matrix from the local beta functions using the transformation matrix from function \unico{CirMat}, and extracts the phase advances from the traces of the sub-matrices. \unico{getdTune} is a simplified version for a transfer matrix which is known to be block-diagonal.
+
+\unico{GetBeta12} calculates the projections of the normal mode beta functions to the physical beta functions.
+
+\unico{Pathlength} calculates the path length by estimating the second order matrix elements as defined in TRANSPORT (see comment in code for details).\\
+
+\underline{The elements}
+
+The \unico{\dots\_Matrix} functions return $5\times 5$ transfer matrices of the basic linear elements. Since OPA does not include longitudinal dynamics, there are no rows and columns for phase/time and the 55-element is always 1. The fifth column of the matrix contains the dispersion production vector. Drift space, quadrupole, sector magnet and edge kick have block-diagonal matrices, i.e. they don't couple. Coupling elements are the explicit rotation and the solenoid. The Bending magnet matrix is a sector matrix sandwiched between edge kicks. The matrix functions are called by the element procedures. 
+OPA knows 17 different elements as listed at the very beginning of \ouni{OPAglobal}:
+
+There are no procedures for markers, optics markers and photon beam markers, because they don't act on beam dynamics. There is a placeholder procedure \unico{Monitor} for beam position monitors but it does nothing. The septum element~--as seen from the stored beam~-- is handled as a drift space in beam dynamics.
+
+\unico{DriftSpace}, \unico{Quadrupole} and \unico{Bending} are the standard linear lattice elements. Actually \unico{Bending} switches to \unico{Quadrupole} if the bend angle is zero, and \unico{Quadrupole} switches to \unico{Driftspace} if the gradient is zero. 
+So \unico{Bending} is the most complex procedure and should be explained in some detail. It performs the following steps: at first the magnet is misaliged, if misalignments were requested, then a rotation is applied if the magnet is tilted. Depending on the direction of the magnet, the edge angles are interchanged and the edge kick matrices are calculated. Then the beam (i.e. the optical functions) is propagated through the entry edge because the values at the beginning of the sector are needed to estimate the phase advance inside the sector (procedure \unico{getdtune}) in order to set the right number of points for numerical evaluation of the radiation integrals. Before doing so, the complete bending magnet matrix including entry edge, sector and exit edge is calculated twice, first on-axis (\code{TM0}) as needed for the closed orbit finder, then off-axis (\code{TM}) to include dispersion downfeeds for the integrals. If radiation integrals or chromaticities are requested, the sector is split in a number of slices, the beam is propagated step-wise, and the integrals are obtained by Simpson's rule (see section 3 in \cite{inside} for details, also for the other elements). Finally, the beam is propagated through the complete bending magnet, and rotation and misalignments are undone at exit. \unico{Quadrupole} contains a simplified version of this algorithm, but including radiation integrals too, since there may be off-axis contributions.
+
+\unico{Combined} is a bending magnet which also has a sextupole component. It is modelled as a series of bending magnets with thin sextupole kicks between. Having both \unico{Combined} and \unico{Bending} has historical reasons, and maintaining both is for backward compatibility, but in principole they could be united.
+
+\unico{Undulator} contains a loop over rectangular bends and drift spaces, where the parameters of these sub-elements are set by the procedure \unico{UnduFacs}. For the radiation integrals a simplified algorithm using averages is applied since the bends inside the array are small.
+
+\unico{Solenoid} is a simplified treatment of the solenoid providing beam rotation and focusing in both planes. Note, that the transverse vector potential components of the solenoid are not taken into account, also contributions to chromaticity and radiation are not considered.
+
+\unico{Rotation} is an explicit beam rotation. It's rarely used, because rotated elements like skew quadrupoles are rather set up by passing a rotation angle to the corresponding element procedure. Then the element matrix internally is sandwiched between the rotation and its inverse.
+
+\unico{ThinSextupole} and \unico{Multipole} are thin multipole kicks~-- basically, a sextupole is just a multipole of order 3, but the dedicated procedure executes faster. The procedures apply a non-linear kick to the orbit and a transfer matrix to the optics for off-axis gradient downfeed. (For order 2, quadrupole, there is a gradient on-axis too.) Contributions to radiation integrals are usually negligible and therefore not included. The \unico{Multipole} procedure uses explicit expressions up to octupole (order $n=4$). For higher orders the general complex expression is evaluated (see comment in code). A vertical offset of the beam requires coupled treatment due to skew quad down-feed.
+
+\unico{Sextupole} is a thick sextupole, internally modelled as a series of drifts and thin sextupole kicks as the most simple second order symplectic integrator. A corresponding procedure for a thick general multipole does not exist yet.
+
+\unico{Kicker} is a time-dependent thick multipole. Parameters delay and period (of half sine bump) and the time of flight from the start of the lattice define the kick strength applied. Like the thick sextupole, the kicker is subdivided in a series of drifts and thin kicks. The transverse shape of the kick can be selected to be of multipole or  sine shape (BESSY type NLK). Note that for the NLK, the kicks are only correct in the midplane ($y=0$).
+
+\unico{HCorr} and \unico{VCorr} are correctors, i.e. weak dipoles which just give a kick to the orbit and to the dispersion function without further effect on the beam optics.\\
+
+\underline{Slicing}
+
+The \unico{SliceSet} function calculates the number of slices for the optical functions inside an element to be displayed in one-pixel resolution on the screen. The record \vrcod{OPAglobal}{CurvePlot} contains a field \unico{slice} for the length of the slice in physical coordinates, i.e. in meters, calculated by \prcod{opticview}{Zoom}. The \unico{SliceSet} function checks if the element is outside, partially inside or completey inside the current plot window, or if the plot window is completely inside the element. It writes start and end position inside the element and the number and length of slices to the \unico{CurvePlot} record and returns \code{true} if at least a part of the element will be visible in the plot area.
+
+\unico{SlicingN} receives transfer matrices \unico{msl} for a slice, \unico{mof} for the invisible part of the element left of the plot window, and \unico{min} and \unico{mex} for edge focusing at entry and exit of the element (applies to bends only). Additional matrices \unico{mof0,msl0} without dispersion down-feeds are supplied to show both orbit and dispersion functions correctly. The procedure further receives the optics values at the entry to the element, because these are known from the previous run of \prcod{opticplot}{Lattel}. Then optical parameters at the slices are calculateed using a simplified propagation procedure and the results are appended to the \vrcod{OPAglobal}{Curve} variable for later plotting by \ouni{opticplot}. Finally the optics value at the end of the calculation (which may be still inside the element) overwrite the optics values from input.
+
+\unico{SkippingN} is only needed for undulators, which are modelled as a loop over drifts and bends, and where several of these basic elements may be left of the plot window. The optics values are propagated through these invisible basic elements to get the correct initial values at the first partially visible undulator pole. \feature{In this wasy it is possible to zoom into an undulator and see the dispersion oscillation!}
+
+The \unico{Slice(Drift,Quad,Sol,Bend)N} procedures call \unico{SliceSet} and calculate the required transfermatrices for \unico{SlicingN} and \unico{SkippingN}.
+
+\unico{SliceUnduN} loops over bends and drifts of the magnet array if at least a part of the undulator is inside the plot window.
+
+\unico{SextKickN} is a simplified version of \unico{ThinSextupole} to propagate optics values through a sextupole kick.
+
+\unico{SliceSextN} and \unico{SliceCombN} make use of \unico{SextKickN} because they model thick sextupole and combined function magnet as loop over drifts or bends with sextupole kicks between.
+
+
+
+\oguih{Linar matching}{OpticMatch} 
+
+\desc{Matching implements a linear equation solver based on LU decomposition for the linear optics. For historical reasons, it does not use the solver in \prcod{Mathlib}{LUDCMP,LUBKSB} but the algorithm was explicitly coded in the 1980's by Klaus Wille (procedure \guico{Step}) , and is documented in his book~\cite{kwille}. Matching is done from a start point to an end point in the lattice. The lattice tunes and optics functions at an additional intermediate point may be included too.  After selecting these options, a list of available knobs is established. Then the user selects the constraints, i.e. the optics parameters at end (and intermediate) point, sets the target values and selects at least the same number of knobs (e.g. quadrupole strength, variable etc.) from the list. The solver proceeds using the square matrix of most sensitive knobs, which is recalculated after each step to take into account non-linearities. If successful, the method converges quadratically, if not it returns messages, what went wrong (procedure \guico{Term}). Reduced step size can be set for slower but more robust convergence. It is possible to run a scan over some range of target values. \\
+There are three panels at the right side of the GUI, one for the knobs, one for the matching process and one for parameter scans. Only one of them is visible at a time.\\
+\todo{The algorithm itself with catches for errors as implemented over the years, is quite robust and could be used further in principle. However, nowadays better and well proven solvers may be available, which also include limit ranges for the knobs. Further, the present procedure is restricted to uncoupled lattices and to only one intermediate point besides start and end of matching, which sometimes is a nuisance. The present GUI is well conistent (how options are enabled etc.) but its rigid structure makes extensions cumbersome. It should be re-organized for example using tabs.}\\
+Expecting a rewrite of this module in future, only a brief summary of the most important actions will be given here.}
+
+\uses{\ouni{opticplot}, \oguif{knobframe}, \ogui{OpticMatchScan}, \ouni{OPAglobal},  \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+
+\ppro{
+\guico{Load} initializes the GUI. It receives handles to the \code{PaintBox} plot window and to the array of \oguif{knobframe} knobs in \ogui{opticview} in order to be able to set the knobs to new values and to show the new optical functions after matching. Then it searches for optis markers, which may be used as start, end or intermediate point for matching, and adds them to the \guico{ini/mat/midpoint} pulldown lists. Several user settings are restored from a previous session, since often the same matching scenario is used again.
+}
+
+\act{
+\evcod{starting,matching,intermediate}{(ini,mat,mid)pointChange} call the private procedure \guico{knoblist} to establishes the list of available knobs after selecting the start, end (and optionally intermediate) points for matching. For each knob a named check box is created.
+
+\evcod{Optics parameter check boxes}{cselClick} and \evcod{Knob check boxes}{knobSelect} build the lists of constraints and knobs and set the \ofld{Go} button if there are at least as many knobs as constraints.
+
+\evcod{incl.bends}{cbxIncBendsClick} includes bending magnets in the knob list, because often they are not used, so the panel is less crowded if they are not shown.
+
+\evcod{Go}{gobutClick} hides the knob panel\guico{panknobs} and shows the matching panel \guico{panmat} with a grid of knob values. Then the iteration starts until the procedure \guico{Step} returns \code{true} because it terminated with success or failure, or the user stopped the iteration pressing \evcod{Abort}{bustopClick}. The last option requires the Pascal procedure \code{Application.ProcessMessages}, which reacts to GUI events, to be called inside the loop. After termination buttons become active to show the result in \ogui{opticview}, to accept the new values, to reset to initial values or to retry the calculation (for example with reduced step size to be entered in the \ofld{Fraction [\%]} field, in case of bad convergence.)
+
+\evcod{Show}{butShowClick} actually only hides the \ogui{OpticMatch} GUI (which is modal!) to  uncover the \ogui{opticview} GUI which is behind and shows the current optical functions anyway.
+
+\evcod{Accept}{butaccClick} saves the settings and closes \ogui{OpticMatch}.
+
+\evcod{Reset}{butaccresClick} restores the old knob values, recalculates the optics, saves the scenario and closes the GUI.
+
+\evcod{Retry}{butrtyClick} restores the old knob values and sets up for a new iteration.
+
+\evcod{Scan}{ScanClick} prepares for a parameter scan, i.e. a series of matching iterations for a range of target values. For this purpose, the scan panel \guico{panfig} becomes visible, the modal GUI \ogui{OpticMatchScan} is launched to enter range parameters, and then the matching series are started, the results are saved and plotted eventually. The \ofld{$<,>$} buttons under the plot window allow to toggle between displays for the knobs and functions.
+}
+
+
+\oguih{Parameter scan}{OpticMatchScan}
+
+\desc{This very simple modal GUI is launched by \evcod{OpticMatch}{ScanClick} that the user may enter the range for a parameter scan. At exit it writes the data to the variable \vrcod{opticplot}{ScanPar}, from where \ogui{OpticMatch} takes them to perform the scan.}
+
+\uses{\ouni{opticplot}, \ouni{OPAglobal}, \ouni{../com/asaux}} 
 
 
 \oguih{Tune diagram}{OPAtune}
 
-GUI window to show a tune diagram: resonances up to selected orders and the working point, a line or a group of tune points is shown in the diagram. This procedure is used in linear optics to show the working point or it variation with momentum, in non-lineare optics to show a predictions for the tune footprint and in tracking to show the tracked tune footprint.\\
+\desc{The tune diagram GUI is created at start of OPA already and provides the variable \guico{tuneplot}, which is passed in the initialization procedures of the modules using it: \ogui{opticview} shows the working point, i.e. the tunes of a periodic solution. \ogui{OPAmomentum} shows the variation of tunes with momentum. \ogui{OPAChroma} shows an analytical estimate of the tune footprint. And \ogui{OPAtrackP} shows the amplitude dependent tune variation. In the background always shown is the web of resonance lines.}
 
 \uses{\ouni{OPAglobal}, \oguif{../com/asfigure}, \ouni{../com/asaux}}
+
+\ppro{
+\guico{Diagram} makes the tune diagram visible if a periodic solution exists. Input is the point in tune space where to center the diagram.  The resonance lines inside the visible tune region up to the selected order are calculated by private procedure \unico{getLines} and characterized as regular, skew, non-systematic.  The periodicity of the lattice is stored in \vrcod{OPAglobal}{NPer} and determines the selection of systematic resonances. 
+
+\guico{AddTunePoint} adds a tune point to the diagram. If the input flag \guico{connect} is \code{true} the point is connected to the previous point. The inputs \guico{dpp, dppmax} are used to show off-momentum points in a color range. Used by \ogui{opticview} and \ogui{OPAmomentum}.
+
+\guico{AddChromLine} adds a line to show the chromaticity, i.e. the variation of tune with momentum, with chroomaticities up to third order and the momentum range as input. Used by \ogui{OPAChroma}.
+
+\guico{AddTushPoint} adds points from amplitude dependant tune shift tracking. Input \guico{xmy} controls the color of the points: horizontal, coupled, vertical in blue, purple, red; outside aperture in grey. Used by \ogui{OPAtrackP}.
+
+\guico{Refresh} clears the diagram from points which had been added.
+}
+\act{
+\evcodx{On create}{FormCreate} sets defaults and restores user settings.
+
+\evcodx{On resize}{FormResize} adjusts the GUI if the user changes its size.
+
+All other actions control the plot: The buttons \ofldx{Order} \ofld{$+$} \ofld{$-$} increase/decrease the maximum resonance order. The \ofld{nsys} and \ofld{skew} check boxes switch on/off non-systematic and skew resonances. The buttons under the plot window are to zoom in/out, to shift the region right/left, up/down and to re-center. \ofld{EPS} exports the diagram.
+}
 
 \section{\label{secmomo}Momentum Dependent Optics}
 

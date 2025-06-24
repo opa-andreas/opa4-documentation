@@ -156,14 +156,14 @@ Editors for the RF bucket and longitudinal gradient bends are explained in secti
 {\small
 \begin{tabular}{lllr}
 Name & class & Purpose & Size \\ \hline
-\ogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
 \ouni{OPAglobal} & & global variables and procedures & 2986 \\
+\ogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
 \ouni{mathlib} & & mathematical library & 2075 \\
 \oguif{../com/Vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
 \oguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
 \ouni{../com/conrect} & & contour plot calculation & 332 \\
-\hline
 \ouni{../com/asaux} & & little helpers & 349 \\
+\hline
 \ouni{opalatticefiles} & & file reading and writing & 1839 \\
 \ogui{texteditor} & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
 \ogui{OPAEditor} & \guico{TFormEdit} & interactive lattice editor  & 346 \\
@@ -183,8 +183,9 @@ Name & class & Purpose & Size \\ \hline
 \ogui{OpticMatchScan} & \guico{TsetMatchScan}& parameter scan & 119 \\
 \ogui{OPAtune} & \guico{TTunePlot} & show the tune diagram & 634 \\
 \hline
-\ogui{OPAmomentum} & \guico{} & momentum dependence and optimization & 949 \\
-\ouni{MomentumLib} & \guico{} & momentum dependent calculations & 480 \\
+\ogui{OPAmomentum} & \guico{Tmomentum} & momentum dependence and optimization & 949 \\
+\ouni{MomentumLib} &  & momentum dependent calculations & 480 \\
+\ogui{Bucket} & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
 \ogui{OPAChroma} & \guico{} & nonlinear optimization & 1413 \\
 \oguif{CSexLine} & \guico{} & controller for nonlinear element & 454 \\
@@ -196,7 +197,6 @@ Name & class & Purpose & Size \\ \hline
 \hline
 \ogui{OPAorbit} & \guico{} & orbit correction and injection & 2353 \\
 \hline
-\ogui{Bucket} & \guico{} & plot RF bucket & 640 \\
 \ogui{LGBeditor} & \guico{} & longitudinal gradient bend editor & 702 \\
 \ouni{LGBeditorLib} & & longitudinal gradient bend calculations & 471 \\
 \hline
@@ -1139,13 +1139,95 @@ Expecting a rewrite of this module in future, only a brief summary of the most i
 All other actions control the plot: The buttons \ofldx{Order} \ofld{$+$} \ofld{$-$} increase/decrease the maximum resonance order. The \ofld{nsys} and \ofld{skew} check boxes switch on/off non-systematic and skew resonances. The buttons under the plot window are to zoom in/out, to shift the region right/left, up/down and to re-center. \ofld{EPS} exports the diagram.
 }
 
-\section{\label{secmomo}Momentum Dependent Optics}
+\section{\label{secmomo}Longitudinal optics}
+OPA does not contain true longitudinal dynamics, i.e. all calculations are for fixed momentum offset, and tracking proceeds only in 4-D, not in 6-D. There are no cavities and no acceleration.
+
 
 \oguih{Momentum dependence}{OPAmomentum}
 
+\desc{This GUI shows optical functions at lattice start and lattice integrals like tunes, emittance etc. for some momentum range. This functionality is the same like performed in \ogui{opticview}/\ouni{opticplot}: for periodic lattices closed orbit and periodic solution are calculated, then for any lattice, the initial parameters are propagated and the integrals are calculated. The plotted curves of momentum dependent parameters are then fitted by polynomials. In case of pathlength, coefficients are saved internally to be used later in the bucket viewer \ogui{Bucket}.
+
+\todo{For the particular problem to design a non-linear bunch-compressor for an FEL, the module once was extended to set target values for polynomial coefficients and allocate non-linear elements to align the polynomial to the target by means of a Powell minimzer. This feature is never used for synchrotrons and storage rings, where the side-effects of this brute force alignment are devastating with regard to non-linear dynamics. Since this extension is irrelevant, improvised and fragile, it should be removed~-- however, this requires some disentangling.}
+
+Therefore only the first part of the GUI is briefly explained here.
+}
+
+\uses{\ouni{MomentumLib}, \ouni{opticplot}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+
+\ppro{
+\guico{Start} called from \ogui{opamenu} receives a handle to the tune diagram. Then it assigns handles defined in \ouni{MomentumLib} to some of its GUI components to give \ouni{MomentumLib} access. Then user settings are restored, and some initialization is done, and the GUI is resized.
+}
+
+\act{
+\evcodx{On create}{FormCreate} builds the GUI by dynamically creating its components. These include radio button for the 20 different availabe plots as defined in the header of \ouni{MomentumLib}. \todo{More components, which have the \guico{panmin} panel as parent, are for the minimizer and to be removed.}
+
+\evcodx{On resize}{FormResize} performs a dynamic resize if the user changes the size of the GUI, distributing evenly the available space.
+
+\evcodx{On paint}{FormPaint} calls \prcod{MomentumLib}{MakePlot}\\
+
+\evcod{periodic}{chkPerClick} sets the optics mode to periodic. Of course, a periodic solution may not exist for all values in the momentum range. These failed points will be omitted in the plot.
+
+\evcod{Go}{butGoClick} performs the calculation calling \prcod{MomentumLib}{FullCalc}. It also plots the result for the currently selected plotmode, including calculation and display of the fitted polygon. Polynomial coefficients are listed in table \guico{gfit}.
+
+\evcod{Fit}{butFitClick} repeats fit and plot with the selected fit parameters.
+
+\evcod{Units for table}{butfunitClick} toogles between showing the polynomial coefficients in table \guico{gfit} in SI-units or in convenient units as used for the plot annotations.
+
+\evcodx{Radio buttons}{rbClick} sets the plot mode according to the clicked radiobutton and repeats fit and plot. \\
+
+Events not mentioned are either trivial ( e.g. check for valid number in edit fields), or they belong to the (working but irrelevant) Powell minimizer, which is started by the \ofld{optimize} button. 
+}
+
+
 \ounih{Calculations}{MomentumLib} 
 
+\desc{This unit contains the physics and plotting for the \ogui{OPAmomentum} GUI.
+}
+
+\uses{\ouni{opticplot}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+
+\pvar{
+The header contains parameters for the 20 plot modes: color of plot, number format for table, annotation of radio buttons in \ogui{OPAmomentum} etc. Some plots show two functions, for example horizontal and vertical tune shift. The arrays \unico{ires1,2} control, what to plot. \code{ires2=-1} suppresses the second curve.
+
+\unico{result} is an array of a 20-element array to store the results over the momentum range. The size of the array depends on the number of momentum values to be calculated.
+
+The \unico{...\_HANDLE} variables refer to components of the \guico{OPAmomentum} GUI.
+
+\unico{res\_funit} contains factors to switch between SI-units and plot units in the polynomial coefficients table.
+
+
+\todo{All the variables containing \code{"op\_"} or \code{"kn\_"} or \code{"Pen"} in the name belong to the obsolete minimizer.}
+}
+
+\ppro{
+\unico{Makeplot} shows the selected results. Valid points are plotted as symbols. The internal procedure \unico{fit\_and\_plot} performms a polynomial fit of the requested order over the valid points, shows the fit result as (an) additional line(s) in the plot, and writes the fit coefficients to the table. The internal procedure \unico{plot\_qclines} adds the predictions for the chromaticities from the non-linear optimizer \guico{OPAChroma} if available, and if tunes were selected for plotting.
+
+\unico{FullCalc} contains the complete calculation:\\
+\unico{PreCalc} prepares for the calculation by setting up the momentum values. In case for periodic solution requested, it first checks the on-momentum solution. If successful, the tune diagram \ogui{OPAtune} is launched and the working point is plotted. If chromaticity data are available from a previous run of \guico{OPAChroma}, they are also shown in the tune diagram as a line. \todo{BUG: diagram appears but no plot, area  stays grey.}\\
+\unico{Calculate} loops over the momentum range, calculates the optics parameters and integrals for each momentum value, and stores the results in the \unico{result} array if valid.\\
+Afterwards \unico{MakePLot} is called.\\
+\unico{PostCalc} finally plots results to the tune diagram if available to show the chromatic tune shift.
+
+\todo{Procedures \unico{CalcPenalty, ShowPenalty, CalcTarg} are obsolete.}
+
+}
+
+
+
+\oguih{RF bucket viewer}{Bucket}
+
+\desc{
+The RF bucket is calculated based on up to five orders of momentum compaction and RF harmonics as described in \cite{inside}. A contour plot of equipotentials and the separatrix are displayed, and momentum acceptance and the bunch length are estimated.
+
+The coefficients of momentum compaction may be taken over from a previous calculation of momentum dependent optics, \ogui{OPAmomentum}. The estimates for momentum acceptance and bunch length are saved to be used later in Touschek tracking \ogui{OPAtrackT}.
+}
+
+\uses{\ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+
+
+
 \section{\label{secnonl}Non-linear Optimization}
+
 
 \oguih{Non-linear optimization}{OPAChroma} 
 
@@ -1167,7 +1249,6 @@ All other actions control the plot: The buttons \ofldx{Order} \ofld{$+$} \ofld{$
 
 \section{\label{secspee}Special Element Editors}
 
-\oguih{RF bucket}{Bucket}
 
 \oguih{Longitudinal gradient bend}{LGBeditor} 
 
@@ -1208,7 +1289,6 @@ These two procedures optimize the field profile of a longitudinal gradient bend 
 \subsection{Optics Design}
 
 
-\opamodule{OpticPlot.pas}{(98.3k)}{OPAglobal, OPAElements, OPAtune, MathLib, ASfigure, VGraph, ASaux.}
 
 \opamodule{OPAorbit.pas/.lfm}{(73.0k)}{OPAglobal, OpticPlot,  OpticStart, Knobframe, MathLib, ASfigure, ASaux.}
 This unit calculates the beam orbit. It is used to either study orbit distortion and correction (usually in periodic mode) or to study injection (usually in forward mode)~-- a corresponding flag is set at start. Most procedureds in the unit are used to set up the rather complex GUI with knobs for correctors, kickers and BPMs and various panels for orbit correction, plotting or injection studies.
@@ -1223,21 +1303,6 @@ In both modes, when leaving the unit, results for misalignments and corrector se
 
 Note, that correctors and BPMs defined with reserved names {\tt CH,CV,MON} in the lattice file are internally expanded to a set of individual elements, e.g. {\tt CH001...} when unpacking the lattice \code{OPAGlobal>MakeLattice}.
 
-\subsection{Longitudinal optics}
-OPA does not contain true longitudinal dynamics, i.e. all calculations are for fixed momentum offset, and tracking proceeds only in 4-D, not in 6-D. There are no cavities and no acceleration.
-
-\opamodule{OPAmomentum.pas/.lfm}{(26.8k)}{OPAglobal, OpticPlot, ASfigure, OPAtune, MathLib, ASaux.}
-\opamodule{MomentumLib.pas}{(16.5k)}{OPAglobal, OpticPlot, ASfigure, OPAtune, MathLib, ASaux.}
-These two procedures calculate linear optics (periodic or forward) for some momentum range, show the results and apply a polynomial fit. The first procedure mainly controls the GUI, the second one is for calculation and plotting.
-Results to fit and show are selected in the GUI. Results for path length are saved internally to be used when plotting the bucket (see next unit). Tune results are shown in a tune diagram.
-
-\todo{A Powell minimizer was implemented once for a special purpose (non-linear bunch compressor study): it takes selected multipoles as knobs to adjust a momentum dependent function (e.g. $X(\delta)$) to a target function. However this implementation was ``quick and dirty'' and may be removed again.}\\
-
-
-\opamodule{Bucket.pas/.lfm}{(19.4k)}{OPAglobal, ASfigure, MathLib, Conrect, ASaux.}
-The RF bucket is calculated based on up to five orders of momentum compaction and RF harmonics as described in Appendix \ref{appbucket}, \code{>CalcBucket}, and a contour plot of equipotentials and the separatrix is shown.
-
-The coefficients for momentum compaction may be taken over from the previous unit on momentum dependent optics. The estimates for momentum acceptance and bunch length are saved for re-use in the Touschek tracking unit (see below).\\
 
 \subsection{Non-linear Optimization}
 Non-linear optimization uses a penalty function composed from a fixed set of Hamiltonian modes on one side, which are controlled by a variable set of sextupoles and octupoles on the other side.

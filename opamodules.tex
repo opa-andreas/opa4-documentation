@@ -55,7 +55,7 @@
 
 %\newcommand{\uses}[1]{\subsubsection{Uses} #1}
 %\newcommand{\uses}[1]{\rule[3pt]{\textwidth}{0.2pt} \\ {\bf Uses: } #1}
-\newcommand{\uses}[1]{{\bf Uses: } #1}
+\newcommand{\uses}[1]{\flushleft {\bf Uses:} #1}
 
 %\newcommand{\desc}[1]{\subsubsection*{Description} #1}
 \newcommand{\desc}[1]{#1}
@@ -187,7 +187,7 @@ Name & class & Purpose & Size \\ \hline
 \ouni{MomentumLib} &  & momentum dependent calculations & 480 \\
 \ogui{Bucket} & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
-\ogui{OPAChroma} & \guico{} & nonlinear optimization & 1413 \\
+\ogui{OPAChroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
 \oguif{CSexLine} & \guico{} & controller for nonlinear element & 454 \\
 \oguif{CHamLine} & \guico{} & bar indicator for Hamiltonian mode & 416 \\
 \ouni{ChromGUILib1} & & little helper to pass results handles & 79 \\
@@ -1220,28 +1220,164 @@ Afterwards \unico{MakePLot} is called.\\
 The RF bucket is calculated based on up to five orders of momentum compaction and RF harmonics as described in \cite{inside}. A contour plot of equipotentials and the separatrix are displayed, and momentum acceptance and the bunch length are estimated.
 
 The coefficients of momentum compaction may be taken over from a previous calculation of momentum dependent optics, \ogui{OPAmomentum}. The estimates for momentum acceptance and bunch length are saved to be used later in Touschek tracking \ogui{OPAtrackT}.
+
+For "playing" with the bucket, the viewer may also be used with manual input for cavity voltages and momentum compaction, even without any lattice. Therefore the option is always enabled in \ogui{opamenu}.
 }
 
-\uses{\ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+\uses{\ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/conrect}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
+
+\act{
+\evcodx{On show}{FormShow} performs all initializations when the GUI becomes visible:  private procedure \guico{Layout} is called to arrange the components (although this GUI does not react to resize by user), user settings are loaded and filled into the edit fields. With this settings, the bucket is calculated immediately and shown by calling private \ogui{CalcBucket} and \ogui{MakePlot}:
+
+\guico{CalcBucket} performs all the calculations as described in \cite{inside}. This also includes the call to \prcod{../com/concrect}{conrec} to get the equipotential contours, because from these the energy acceptance and bunch length are estimated. However, this requires the central fixpoint to be elliptic (i.e. no overstretched bunches). And bunch length can be estimated only if there is a value for energy spread from a previous optics run.
+
+\guico{MakePlot} just plots the results and writes them to labels in the GUI.
 
 
+\evcodx{On paint}{FormPaint} just calls \ogui{MakePlot} again.
+
+\evcod{Show bucket}{butconClick} calls \ogui{CalcBucket} and \ogui{MakePlot} again.
+
+\evcod{EPS}{butepsClick} sets mode to postscript export and calls {MakePlot} to write file \code{(lattice name)\_bucket.eps}.
+
+\evcod{mode}{butmodClick} toggles between "lattice" and "play" mode, i.e using momentum compaction coefficients from the lattice or from manual input. 
+
+\evcod{use Lattice}{butcopyClick} copies the lattice coefficients to the edit fields for manual modification in "play" mode. This knob and the \ofld{mode} knob are only visible if an optics calculation had been done before.
+
+\evcod{Exit}{butexClick} saves the user settings and closes the GUI.
+}
 
 \section{\label{secnonl}Non-linear Optimization}
 
+The units of this section are linked in a rather complex way as indicated by the \code{uses} declarations, since the main GUI \ogui{OPAChroma} contains many frames for knobs, \oguif{CSexLine}, and for results, \oguif{CHamLine}, which affect each other. This required the two small units \ouni{ChromGUILib1}, \ouni{ChromGUILib1}, to pass the handles. \oguif{CSexLine} declares use of \ouni{ChromGUILib1}, which declares use of \oguif{CHamnLine}. Vice versa,
+\oguif{CHamLine} declares use of \oguif{CSexLine} in the implementation section, i.e. at runtime, not in the interface section, to avoid a circular reference. \\
+\todo{There may be a better way to declare these dependencies.}
 
-\oguih{Non-linear optimization}{OPAChroma} 
+\feature{OPA's non-linear optimizer is a rather useful tool to get a quick optimization of dynamic aperture~-- or to help in understanding why it can't work. Manually playing with the multipoles may give a "feeling" by visualizing the effect on the Hamiltonian modes and the tune footprint, before the automatic minimizer is started. The code executes fast, since all coefficients to sextupole family strengths and products of two families, are calculated only once at start. Multiple periods are realized by a complex factor derived for this purpose~\cite{inside}.}
+
+\oguih{Non-linear optimization panel}{OPAChroma} 
+
+\desc{
+The GUI contains a fixed set of first and second order sextupole Hamiltonian modes and a variable set of knobs connected to non-linear multipole families. These are the sextupoles in first place, which have to maintain corrected chromaticities during optimzation, and optional octupoles and even decapoles. Also sextupole moments in combined function magnets may be included. 
+
+The Hamiltonian modes are scaled by reasonable  betatron amplitudes and momentum range to make them comparable. In addition weight factors are set manually. Optimization may be done by hand "to get a feeling", but usually it is done automatically with frequent user intervention to adjust weights, exclude certain knobs etc. For minimization, the scaled and weighted Hamiltonian modes are summarized to provide a scalar penalty function.
+
+A Powell minimizer is employed to supress first and second order sextupole terms. Second order terms may also be suppressed by an SVD procedure using the octupole families. Both algorithms are based on \cite{numrec} and coded in unit \ouni{mathlib}. Decapoles may only be used manually for third order chromaticity, which is the only third-order effect included.
+
+\todo{Basically, SVD could optimize sextupoles too using the linear system of first order sextupole terms and the linearized (i.e. local tangential) system of second order terms as suggested by Johan Bengtsson and previously implemented in Tracy-2. The mixed approach using Powell and SVD has historical origins but also turned out to perform quite robust.}
+
+Chromaticities up to third order are calculated by numeric differentiation, whereas the other Hamiltonian modes are calculated analytically. A real/complex factor is applied to non-resonant/resonant modes to change the periodicity of the structure~\cite{inside}. 
+
+Besides frames for Hamiltonian modes and multipoles, the GUI contains several edit fields for amplitudes, ranges, periodicity and minimizer settings, many check boxes to select knobs and Hamiltonian modes to be in- or excluded and several buttons to change settings and to control program flow.
+
+
+\todo{BUG: in the linux version, the frames in the GUI don't update. After touching the GUI (i.e. resize by tiny amount) it works. Not yet understood.}
+}
+
+
+\uses{
+\oguif{CHamLine}, \oguif{CSexLine}, \ouni{ChromGUILib1}, \ouni{ChromGUILib2},  \ouni{chromlib}, \ogui{OPAChromaSVector}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/asaux}
+}
+
+\ppro{
+\guico{Start}, called by \ogui{opamenu} receives a handle to the tune diagram \ogui{OPAtune} (to show the prediction of the tune footprint), and then performs many actions:
+
+A fixed number (26) of \oguif{CHamLine} frames is installed to show the Hamiltonian modes and change their weights. This requires passing to each one handles to the other ones, because changing a weight may result in rescaling all. Handles are passed to \ouni{ChromGUILib1} to perform an update of all, if called by a knob \oguif{CSexLine}. Further handles to GUI components, e.g. labels to show pathlength, are passed to \ouni{chromlib}, which contains the physics part. Check boxes are added to select groups of modes to be included in the optimization.
+
+Then the cursor is set to "hourglass" while \prcod{chromlib}{ChromInit} is called, which may need some time to set-up the matrices which connect the vectors of knobs (first order) and knob products (seond order) to the Hamiltonian modes. It also reads user settings, so the next step is to update the GUI with these settings and to use them for a first calculation of the penalty function. The Hamiltonian modes are set to show the results.
+
+As next step, the knobs are installed, one instance of \oguif{CSexLine} for each family of sextupoles, octupoles, decapoles and combined function magnets. Each sextupole needs handles to the other ones, because if a family is assigned to automatically maintain constant chromaticity, a change of another family will change its value. Octupole family handles are passed to \ouni{ChromGUILib2}, which controls the SVD actions. 
+
+Check boxes are added to sextupole families to select them for chromaticity corrections, or to exclude them from optimizaton. If there are octupoles, check boxes are added to the second order terms to select them for the octupole-SVD, and controls for the octupole-SVD are made visible. Further, range edit fields for octupoles and decapoles are made visible if elements of these kinds are present.
+
+Finally a tune diagram is drawn to show the tune footprint estimate based on the initial calculation. 
+}
+
+\act{
+\evcodx{"inc row}{Check(2Q,Qxx,Cr2,Oct)Click} include in or exclude from the calculations the half integer chromatic resonances, amplitude dependent tune shifts (ADTS), nonlinear chromaticities and 2nd order resonant terms, and perform a new calculation.
+
+\evcodx{"O" row}{CheckOctClick} selects the Hamiltonian mode beside the checkbox for the octupole SVD (only visible if the lattice contains octupoles), sets up the SVD matrices and initializes the filter for weight factors to no cut (threshold 0).
+
+\evcod{Periods}{edPer(KeyPress,Exit)} sets the number or periods, calls \prcod{chromlib}{S\_Period} to recalculate the complex periodicity factors to be multiplied with the Hamiltonian modes and updates calculation and GUI.
+
+\evcod{2Jx, 2Jy, dpp, F}{EdScPar(KeyPress,Exit)} reads values for the relevant betatron amplitudes and momentum spread and updates the Hamiltonian modes. The last one is a factor how to weight the quadratic sum of sextupoles strengths.
+
+\evcodx{"$\xi$" row}{CSelectClick} reacts to the dynamically created row of checkboxes and selects the corresponding sextupole family for automated correction of linear chromaticity. Exactly two families have to be selected to activate the \guico{AutoChrom} flag. Then the linear chromaticities and the corresponding \oguif{CSexLine} instances are highlighted in yellow and calculations are repeated.
+
+\evcod{incl.Comb.}{ChkCombClick} in/excludes combined function bends from the sextupole families and en/disables the corresponding \oguif{CSexLine} instances.
+
+\evcod{max B(3[,4[,5]])L, step B(3[,4[,5]])L}{edSOD(KeyPress,Exit)} are fields to set ranges and step size for manual change for the sextupoles [and octupoles [and decapoles]]. The corresponding \oguif{CSexLine} instances are updated, because the number they show turns red if the range is exceeded.
+
+\evcod{Smatrix}{butSmatClick} calls \prcod{chromlib}{S\_TestOut} to write sextupole data to a file. \todo{For testing, not used anymore}.
+
+\evcod{select}{butSelectClick} launches \ogui{OPAChromaSVector} to show the first order sextupole kicks in the complex plane. At first, all the resulting vectors of the first order resonance terms are shown and the eight corresponding  \oguif{CHamLine} instances are highlighted in same color like the vectors. Pressing the button repeatedly shows the single sextupole kicks for one of them, and the corresponding \oguif{CHamLine} instance is highlighted in blue.
+
+\evcod{Minimizer initial step}{EdMinAmp(KeyPress,Exit)} sets the start amplitude of the Powell optimizer. \todo{Seems to have little impact, since Powell anyway scales the step size.}
+
+\evcod{Dpp num.diff.}{EdNumDiff(KeyPress,Exit)} sets the dpp intervall for the numeric differentiation of tune to get the chromaticities. In particular third order chromaticity is sensitive to this number, and the value has to be test to get a stable result.
+
+\evcod{Start}{ButMinClick} prepares the arrays for the Powell minimizer, starts \prcod{mathlib}{Powell} and turns the caption of the button to \ofld{Break}. The function \guico{PenaltyFunction} is passed as a parameter to \unico{Powell}, which will send it a vector of internal knob values. \guico{PenaltyFunction} contains a hyperbolic scaling of these knobs to the sextupole strengths in order to not exceed the range (however, this may cause a sextupole to get stuck at its maximum value without further progress). If automatic chromaticity or sextupole SVD are enabled, these steps are performed first before calculating all the drive terms and add them quadratically with weights as set in the \oguif{CHamLine} instances to compose a single scalar penalty function and write it to a label in the GUI. If the penalty improved the color of the label turns green, if not it is red. Calling \unico{Application.ProcessMessages} allows the GUI to handle events while the minimizer is running in order to interrupt, if the user pressed \ofld{Break}. 
+
+\evcod{Exit}{ButExClick} saves data for chromaticity and ADTS internally for later comparison to tracking results, and closes the GUI.\\
+
+If there are octupoles in the lattice, controls for the SVD appear in the GUI. If some of the second order modes have been selected (see above, \ofldx{"O" row} SVD is set up calling \prcod{chromlib}{Oct\_SVDCMP} and the line \ofld{Con=..., Nw=...} shows the condition, i.e. the ratio of minimum to maximum weight factor and the number of weight factors.
+
+\evcod{$-$,$+$}{ButOsvdN(m,p)Click} decreases or increases the weight factor spectrum (setting the smallest ones to zero) to find the best solution. (Small $N_w$ gives a robust but incomplete solution.)
+
+\evcod{SVD}{ButOsvdDoClick} calls \prcod{chromlib}{Oct\_SVBKSB} to set the octupoles and updates the Hamiltonian modes and penalty function.
+
+\evcod{undo}{ButOsvdUndoClick} restores the octupoles to the values they had before pressing \ofld{SVD}.
+
+\evcod{auto}{chkOsvdAutoClick} sets the SVD to automatic mode. Then it will run in a master-slave mode while the Powell minimizer is working, for example to maintain constant ADTS.
+
+\evcod{all off, res}{ButOct(Off, Res)Click} sets all octupoles to zero and restores the values again.
+}
+
+
+
+
+
+
 
 \oguifh{Element controller}{CSexLine} 
 
+\uses{
+\ouni{ChromGUILib1}, \ouni{ChromGUILib2}, \ouni{chromlib}, \ogui{OPAChromaSVector},  \ouni{OPAglobal}, \ouni{../com/asaux}
+}
+
 \oguifh{Result indicator}{CHamLine} 
+
+ as numbers and, including scalings and weights, as "equalizer bars".
+
+
+\uses{
+\ouni{ChromGUILib2},  \ouni{chromlib}, \ouni{OPAglobal}, \ouni{../com/asaux}~-- and \oguif{CSexLine} at runtime.
+}
+
 
 \ounih{Result handles}{ChromGUILib1} 
 
+\uses{
+\oguif{CHamLine}, \ouni{chromlib}
+}
+
+
 \ounih{Element handles}{ChromGUILib2} 
+
+\uses{ \ouni{chromlib} }
+
 
 \oguih{Vector diagram}{OPAChromaSVector} 
 
+\uses{
+\ouni{chromlib}, \ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/asfigure}
+}
+
 \ounih{Calculations}{chromlib} 
+
+\uses{
+\ouni{opticplot}, \ouni{OPAElements}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}
+}
 
 \section{\label{secorin}Orbit and Injection}
 
@@ -1305,14 +1441,6 @@ Note, that correctors and BPMs defined with reserved names {\tt CH,CV,MON} in th
 
 
 \subsection{Non-linear Optimization}
-Non-linear optimization uses a penalty function composed from a fixed set of Hamiltonian modes on one side, which are controlled by a variable set of sextupoles and octupoles on the other side.
-The dependencies are complicated, if the two minimizers are running (Powell for first and second order sextupole terms, SVD for first order octupole terms), or if chromaticity is automatically adjusted, or if target values for the (non-resonant) Hamiltonian modes are changed. This requires to pass handles from the GUI program \code{OPAChroma} to the frames for the Hamiltonian modes and the multipoles, \code{>CSexLine, CHamLIne} and between these. In order to avoid circular dependencies, two intermediate layers \code{>ChromGUILib1,2} were introduced.
-
-\todo{The nested handles are rather messy. It works, but could be entangled and simplified.}\\
-
-\opamodule{OPAChroma.pas/.lfm}{(40.2k)}{OPAglobal, ChromLib, ChromGUILib1, ChromGUILib2, CHamLine, CSexLine, OPAChromaSVector, OPAtune, MathLib, ASfigure, ASaux.}
-Initialization of the GUI, allocating the frames for Hamiltonians and multipoles and passing all the handles between, \code{>Start} and dimensioning of the GUI \code{>ResizeAll}.
-Set up (and start) the Powell minimizer for the sextupoles \code{>ButMinClick} and set up the SVD-minimizer for the octupoles \code{>ChkOctClick}.\\
 
 \opamodule{ChromLib.pas}{(60.2k)}{OPAglobal, OpticPlot, OPAElements, OPAtune,  MathLib, Vgraph, ASaux.}
 The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.

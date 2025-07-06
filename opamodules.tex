@@ -188,8 +188,8 @@ Name & class & Purpose & Size \\ \hline
 \ogui{Bucket} & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
 \ogui{OPAChroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
-\oguif{CSexLine} & \guico{} & controller for nonlinear element & 454 \\
-\oguif{CHamLine} & \guico{} & bar indicator for Hamiltonian mode & 416 \\
+\oguif{CSexLine} & \guico{TCSex} & controller for nonlinear element & 454 \\
+\oguif{CHamLine} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
 \ouni{ChromGUILib1} & & little helper to pass results handles & 79 \\
 \ouni{ChromGUILib2} & & little helper to pass element handles & 93 \\
 \ogui{OPAChromaSVector} & \guico{} & show Hamiltonian as complex vector & 145 \\
@@ -1341,9 +1341,42 @@ If there are octupoles in the lattice, controls for the SVD appear in the GUI. I
 
 \oguifh{Element controller}{CSexLine} 
 
+\desc{At start, one instance of this frame is embedded in the GUI for each family of sextupole, octupole, decapole and combined function bend. It provides knobs to increase or decrease the magnet strength. Changing the value triggers a calculation of the Hamiltonian modes. If the minimizer is running, the strength field follows.}
+
 \uses{
 \ouni{ChromGUILib1}, \ouni{ChromGUILib2}, \ouni{chromlib}, \ogui{OPAChromaSVector},  \ouni{OPAglobal}, \ouni{../com/asaux}
 }
+
+\ppro{
+This frame contains several public procedures, because the parent GUI \ogui{OPAchroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
+
+\guifco{Init} called by \ogui{OPAchroma} when creating the instance receives a type information if it is sextupole, octupole or decapole and an index for identification. It then gets the corresponding element family and its value, sets the name label and strength field (calling \guifco{SetVal}), and sets the appearance depending on the type.
+
+\guifco{Brothers}, also called by \ogui{OPAchroma} receives handles to all instances of \oguif{CSexLine} including the instance itself.
+
+\guifco{SetSize} places the components inside the frame depending on the available space, which depends on the size of the parent GUI and on the number of knobs.
+
+\guifco{getTabs} returns the position of label, value field and lock checkbox for \ogui{OPAChroma} to properly align the headline above the knobs.
+
+\guifco{SetRange} sets the minimum and maximum value from the range fields in \ogui{OPAChroma} and calls private procedure \guifco{LimitVal} to cut the value to the limit if it exceeds the range and set the font color to red.
+
+\guifco{SetVal} sets the value and also calls \guifco{LimitVal}.
+
+\guifco{UpdateValbyMin} is used by the minimizer function \grcod{OPAChroma}{PenaltyFunction} to only update the value but not trigger any calculation.
+
+\guifco{mySetColor} changes the appearance, called by \ogui{OPAchroma} if the knob is reserved (e.g. for chromaticity correction).
+
+\guifco{Lock,UnLock} locks or unlocks a knob. If locked the frame components are disabled. In case of an octupole family already included in the SVD, the SVD is set-up again without this family.
+
+\guifco{Chrom(Lock,Unlock)} locks/unlocks a sextupole knob reserved for automatic chromaticity correction and disables/enables the check box to lock/unlock manually.
+}
+
+\act{
+The event handlers are trivial: The edit field reacts to manual input and calls private procedure \guifco{UpdateVal}. The \ofld{$<<$} \ofld{$<$}, \ofld{$>$}, \ofld{$>>$} buttons decrease or increase the value by a step as given in the corresponding fields in the \ogui{OPAChroma} GUI, or by a 20 times larger step. The \ofld{off} and \ofld{res} buttons set the value to zero or restore the initial value. And clicking the check box locks/unlocks the element.
+
+Private procedure \guifco{UpdateVal} sets the value and recalculates the drive terms and the penalty function. In case of a sextupole knob, however, if automated chromaticity correction or automated octupole SVD are active, these are executed before. For chromaticity \prcod{chromlib}{ChromCorrect} is called. For octupole SVD the private procedure \guifco{OsvdStep} recalculates the second order terms which may have been affected by the change in sextupole strength, and then peforms another iteration of the SVD. 
+}
+
 
 \oguifh{Result indicator}{CHamLine} 
 
@@ -1379,50 +1412,44 @@ If there are octupoles in the lattice, controls for the SVD appear in the GUI. I
 \ouni{opticplot}, \ouni{OPAElements}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}
 }
 
+
+
+\opamodule{ChromLib.pas}{(60.2k)}{OPAglobal, OpticPlot, OPAElements, OPAtune,  MathLib, Vgraph, ASaux.}
+The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.
+
+Chromaticity up to third order is calculated from numerical differentiation \code{>ChromDiff}. Hamiltonian modes are calculated from multipole settings using the pre-calculated matrices and weight factors entered manually in order to visualize the results and combine them into a single, scalar penalty function, see Eq.\ref{eqpenal} \code{>Driveterms}. Chromaticity is corrected with two selected sextupole families using a simple $2\times 2$ matrix \code{>UpdateChromMatrix, GetLinChroma, ChromCorrect}.
+
+For the octupole matrix a SVD decomposition is performed for correction of the second order sextupole terms which are first order octupole terms. The SVD weight vector is provided for filtering, since usually a ``hard'' correction using all weights does not work well \code{>Oct\_SVDCMP}.
+Decapoles affect only the third order chromaticities. Other third order effects are not included.\\
+
+
+\opamodule{CHamLine.pas/.lfm}{(10.7k) [Frame]}{OPAglobal, ChromLib, ChromGUILib2, CSexLine, ASaux.}
+25 of these frames are embedded in the GUI at start. They display the results for the 25 Hamiltionian modes and allow weight and target values to be set. A change of target or weight triggers an update of the calculations \code{>UpdateWeight, UpdateTarget}. Changing any multipole manually or by the minimizer of course changes these frames.\\
+
+
+
+\opamodule{ChromGUILib1.pas}{(1.9k)}{ChromLib, CHamLine.}
+This small piece of code is mainly for passing handles to the\code{>CHamLine} frames.\\
+
+\opamodule{ChromGUILib2.pas}{(2.7k)}{ChromLib}
+Pass handles to the octupole SVD functions in order to enable automatic execution during minimization, and filters the SVD weight factors.\\
+
+
+\opamodule{OPAChromaSVector.pas/.lfm}{(3.3k)}{OPAglobal, ChromLib, MathLib, ASfigure.}
+Opens a small window to visualize the first order sextupole modes in the complex plane.
+
+
+
+
+
+
+
+
+
 \section{\label{secorin}Orbit and Injection}
 
 \oguih{Orbit and injection}{OPAorbit} 
 
-\section{\label{secspee}Special Element Editors}
-
-
-\oguih{Longitudinal gradient bend}{LGBeditor} 
-
-\ounih{LGB calculations}{LGBeditorLib} 
-
-\section{\label{sectrac}Tracking}
-
-\oguih{Phase space}{OPAtrackP} 
-
-\oguih{Dynamic aperture}{OPAtrackDA} 
-
-\oguih{Touschek lifetime}{OPAtrackT} 
-
-\ounih{Calculations}{tracklib}
-
-\section{\label{secelse}Layout, Currents etc}
-
-\oguih{Machine Layout}{OPAGeometry}
-
-\oguih{Magnet currents}{OPACurrents}
-
-\unico{getKfromI, getdKdIfac, getIfromK} convert  magnet strength in current and vice versa taking into account non-linear magnet saturation.
-
-\ounih{Test procedures}{opatest} 
-
-
-
-
-
-\subsection{Editors}
-
-
-
-\opamodule{LGBeditor.pas/.lfm}{(19.1k)}{OPAglobal,  MathLib, ASfigure, ASaux}
-\opamodule{LGBeditorLib.pas}{(13.9k)}{OPAglobal, ASfigure, ASaux}
-These two procedures optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. The first procedure is mainly the GUI and the minimizer, the second one contains physics and plotting.
-
-\subsection{Optics Design}
 
 
 
@@ -1440,33 +1467,37 @@ In both modes, when leaving the unit, results for misalignments and corrector se
 Note, that correctors and BPMs defined with reserved names {\tt CH,CV,MON} in the lattice file are internally expanded to a set of individual elements, e.g. {\tt CH001...} when unpacking the lattice \code{OPAGlobal>MakeLattice}.
 
 
-\subsection{Non-linear Optimization}
-
-\opamodule{ChromLib.pas}{(60.2k)}{OPAglobal, OpticPlot, OPAElements, OPAtune,  MathLib, Vgraph, ASaux.}
-The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.
-
-Chromaticity up to third order is calculated from numerical differentiation \code{>ChromDiff}. Hamiltonian modes are calculated from multipole settings using the pre-calculated matrices and weight factors entered manually in order to visualize the results and combine them into a single, scalar penalty function, see Eq.\ref{eqpenal} \code{>Driveterms}. Chromaticity is corrected with two selected sextupole families using a simple $2\times 2$ matrix \code{>UpdateChromMatrix, GetLinChroma, ChromCorrect}.
-
-For the octupole matrix a SVD decomposition is performed for correction of the second order sextupole terms which are first order octupole terms. The SVD weight vector is provided for filtering, since usually a ``hard'' correction using all weights does not work well \code{>Oct\_SVDCMP}.
-Decapoles affect only the third order chromaticities. Other third order effects are not included.\\
-
-\opamodule{ChromGUILib1.pas}{(1.9k)}{ChromLib, CHamLine.}
-This small piece of code is mainly for passing handles to the\code{>CHamLine} frames.\\
-
-\opamodule{ChromGUILib2.pas}{(2.7k)}{ChromLib}
-Pass handles to the octupole SVD functions in order to enable automatic execution during minimization, and filters the SVD weight factors.\\
-
-\opamodule{CHamLine.pas/.lfm}{(10.7k) [Frame]}{OPAglobal, ChromLib, ChromGUILib2, CSexLine, ASaux.}
-25 of these frames are embedded in the GUI at start. They display the results for the 25 Hamiltionian modes and allow weight and target values to be set. A change of target or weight triggers an update of the calculations \code{>UpdateWeight, UpdateTarget}. Changing any multipole manually or by the minimizer of course changes these frames.\\
-
-\opamodule{CSexLine.pas/.lfm}{(11.9k) [Frame]}{OPAglobal, ChromLib, ChromGUILib1, ChromGUILib2, OPAChromaSVector, ASaux.}
-At start, one of these frames is embedded in the GUI for each family of sextupole, octupole, decapole and combined function bend. It provides a knob for the magnet strength. Changing it triggers a calculation of the Hamiltonian modes. If the minimizer is running, the strength field has to follow \code{>UpdateVal...}\\
-
-\opamodule{OPAChromaSVector.pas/.lfm}{(3.3k)}{OPAglobal, ChromLib, MathLib, ASfigure.}
-Opens a small window to visualize the first order sextupole modes in the complex plane.
 
 
-\subsection{Tracking}
+
+\section{\label{secspee}Special Element Editors}
+
+
+\oguih{Longitudinal gradient bend}{LGBeditor} 
+
+
+
+
+\ounih{LGB calculations}{LGBeditorLib} 
+
+
+
+\opamodule{LGBeditor.pas/.lfm}{(19.1k)}{OPAglobal,  MathLib, ASfigure, ASaux}
+\opamodule{LGBeditorLib.pas}{(13.9k)}{OPAglobal, ASfigure, ASaux}
+These two procedures optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. The first procedure is mainly the GUI and the minimizer, the second one contains physics and plotting.
+
+
+\section{\label{sectrac}Tracking}
+
+\oguih{Phase space}{OPAtrackP} 
+
+\oguih{Dynamic aperture}{OPAtrackDA} 
+
+\oguih{Touschek lifetime}{OPAtrackT} 
+
+\ounih{Calculations}{tracklib}
+
+
 Tracking is performed in unit {\tt TrackLib}, used by the three GUIs for phase space, dynamic aperture and Touschek tracking:
 
 \opamodule{OPAtrackP.pas/.lfm}{(44.8k)}{OPAglobal,  OPAtune, TrackLib, MathLib, Vgraph, ASfigure, ASaux.}
@@ -1492,7 +1523,14 @@ Tracking proceeds turn by turn at fixed momentum \code{>OneTurn} (or with changi
 
 The procedures in the last third of the unit (from {\tt SineWindow} to the end) are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances.\\
 
-\subsection{Lattice Layout}
+
+
+
+\section{\label{secelse}Layout, Currents etc}
+
+\oguih{Machine Layout}{OPAGeometry}
+
+
 \opamodule{OPAGeometry.pas/.lfm}{(63.2k)}{OPAglobal, OpticPlot, MathLib, ASaux.}
 This unit displays the lattice layout, peforms geometric matching and exports various files.
 The orbit is calculated in 3D-space from element lengths, deflection and rotation angles \code{>CalcOrbit}. The orbit as curve in space is rotated and translated depending on the initial conditions \code{>setDrawMode}.
@@ -1507,7 +1545,12 @@ Geometric matching looks for lattice variables with names starting with ``G'', w
 \todo{Geometric matching works but is not well implemented yet. More checks are required, and also an ``undo'' button should be added.}
 
 
-\subsection{Temporary}
+
+
+\oguih{Magnet currents}{OPACurrents}
+
+\unico{getKfromI, getdKdIfac, getIfromK} convert  magnet strength in current and vice versa taking into account non-linear magnet saturation.
+
 \opamodule{OPACurrents.pas/.lfm}{(10.3k)}{OPAglobal, ASaux.}
 This unit calculates magnet currents using two tables for allocation (i.e. hardware type of the magnet in the lattice) and magnet calibration, which may be read with the lattice in \code{OPAGlobal> ReadAllocation, ReadCalibration}. Calculating the current from the strength parameters and v.v. is done in \code{OPAGlobal> getIfromK, getKfromI}. Due to non-linearity of the calibration curve, a bisection root finder is used \cite{numrec}.
 
@@ -1516,11 +1559,18 @@ The {\tt OPACurrents} unit provides a GUI and writes a {\tt .snap} file to be re
 \todo{The current calculation should be done here, not in {\tt OPAGlobal}.}\\
 
 
+
+
+
+
+
+\ounih{Test procedures}{opatest} 
+
+
 \opamodule{opatest.pas}{(37.3k)}{OPAglobal, OpticPlot, MathLib, ASaux.}
 This unit is for temporarily needed procedures or for testing new stuff, which then, if it works well, is moved to another place.
 
 In the present (\today) version the unit contains, among others, three procedures for reading MAD {\tt .mad}, MAD sequence {\tt .seq} and ELEGANT {\tt .lte} files. The procedures are yet incomplete but nevertheless facilitate reading these files.\\
-
 
 
 

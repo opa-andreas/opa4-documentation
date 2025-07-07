@@ -1249,7 +1249,7 @@ For "playing" with the bucket, the viewer may also be used with manual input for
 
 \section{\label{secnonl}Non-linear Optimization}
 
-The units of this section are linked in a rather complex way as indicated by the \code{uses} declarations, since the main GUI \ogui{OPAChroma} contains many frames for knobs, \oguif{CSexLine}, and for results, \oguif{CHamLine}, which affect each other. This required the two small units \ouni{ChromGUILib1}, \ouni{ChromGUILib1}, to pass the handles. \oguif{CSexLine} declares use of \ouni{ChromGUILib1}, which declares use of \oguif{CHamnLine}. Vice versa,
+The units of this section are linked in a rather complex way as indicated by the \code{uses} declarations, since the main GUI \ogui{OPAChroma} contains many frames for knobs, \oguif{CSexLine}, and for results, \oguif{CHamLine}, which affect each other. This required the two small units \ouni{ChromGUILib1}, \ouni{ChromGUILib1}, to pass the handles. \oguif{CSexLine} declares use of \ouni{ChromGUILib1}, which declares use of \oguif{CHamLine}. Vice versa,
 \oguif{CHamLine} declares use of \oguif{CSexLine} in the implementation section, i.e. at runtime, not in the interface section, to avoid a circular reference. \\
 \todo{There may be a better way to declare these dependencies.}
 
@@ -1335,10 +1335,6 @@ If there are octupoles in the lattice, controls for the SVD appear in the GUI. I
 
 
 
-
-
-
-
 \oguifh{Element controller}{CSexLine} 
 
 \desc{At start, one instance of this frame is embedded in the GUI for each family of sextupole, octupole, decapole and combined function bend. It provides knobs to increase or decrease the magnet strength. Changing the value triggers a calculation of the Hamiltonian modes. If the minimizer is running, the strength field follows.}
@@ -1380,24 +1376,87 @@ Private procedure \guifco{UpdateVal} sets the value and recalculates the drive t
 
 \oguifh{Result indicator}{CHamLine} 
 
- as numbers and, including scalings and weights, as "equalizer bars".
-
+\desc{25 instances of this frame are created in the \ogui{OPAChroma} GUI at start. This frame displays the result for one of the Hamiltonian modes and allows a weight factor to be set for the minimizer, and, in case of non-resonant terms, a target value, which is subtracted for penalty calculation.  The result is shown as number and as bar. The number is the true value in SI units, whereas the bar size corresponds to the value multiplied with relevant amplitudes (set in \ofld{2Jx} etc. fields in \ogui{OPAChroma}) and the relative weight factor. Changing the weight may force a resize of the bar scale and thus affects all other \oguif{CHamLine} instances too. Changing a target may affect sextupoles or octupoles if automated chromaticity correction or octupole SVD is active, therefore access to \oguif{CSexLine} instances is needed. Since \oguif{CSexLine} already uses \oguif{CHamLine} (via \ouni{ChromGUILib1}), the use is not declared in the \code{interface} section to avoid a circular reference but in the \code{implementation} section. 
+}
 
 \uses{
 \ouni{ChromGUILib2},  \ouni{chromlib}, \ouni{OPAglobal}, \ouni{../com/asaux}~-- and \oguif{CSexLine} at runtime.
 }
 
+\ppro{
+This frame contains several public procedures, because the parent GUI \ogui{OPAchroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
 
-\ounih{Result handles}{ChromGUILib1} 
+\guifco{Init} called by \ogui{OPAchroma} when creating the instance sets default values and the appearance to distinguish resonant from non-resonant modes.
 
-\uses{
-\oguif{CHamLine}, \ouni{chromlib}
+\guifco{SetLab} writes the name of the mode to the name label.
+
+\guifco{Brothers}, also called by \ogui{OPAchroma} receives handles to all instances of \oguif{CHamLine} including the instance itself.
+
+\guifco{getChromSexHandles} receives handles to the two sextupole families assigned to automated chomaticity correction.
+
+\guifco{passOctupoleHandle} receives a handle to an octupole family and adds it to an internal array of octupole handles. These are needed to update the octupole families if automated octupole SVD is active, and weight or target for one of the modes assigned is changed.
+
+\guifco{SetSize} places the components inside the frame depending on the available space, which depends on the size of the parent GUI and on the number of knobs.
+
+\guifco{getTabs} returns the position of target, value and weight fields for \ogui{OPAChroma} to properly align the headline above the knobs.
+
+\guifco{SetValmax} sets the maximum value to scale the bar. 
+
+\guifco{SetWeight} sets the weight factor field and its font color.
+
+\guifco{UpdateWeight} accepts a new weight factor and adjusts the scale of {\em all} \oguif{TCHamLine} instances to maintain comparability of the bars. 
+If automated octupole SVD is active, a change of weight will affect its result, therefore the SVD is repeated. This will change the second order modes, so the scale of all instances is adjusted again.
+
+\guifco{SetTarget} sets the target field (non-resonant modes only).
+
+\guifco{UpdateTarget} accepts a new target value and peforms the same steps like \guifco{UpdateWeight} (see above). In addition, if automated chromaticity correction is active and the target value actually is one of the desired linear chromaticities, then \prcod{chromlib}{ChromCorrect} is called, and the two sextupole families assigned to chromaticity correction are updated.
+
+\guifco{UpdateHam} writes the value field and calls private procedure \guifco{PlotBar} to plot the bar.
+
+\guifco{mySetColor} changes the appearance, called by \ogui{OPAchroma} if the mode is to be highlighted for various reasons.
+
+\guifco{MinInclude} sets the color to grey and disables all components, if this mode is not included in penalty calculation.
+}
+
+\act{
+The event handlers are trivial: The target and weight edit fields react to manual input and call \guifco{UpdateTarget} or \guifco{UpdateWeight} (see above). The \ofld{$-$} \ofld{$+$}, buttons decrease or increase the weight.
+
+\evcodxf{bar panel}{PanBarPaint} reacts to a \code{repaint} event. It first erases the bar by filling the panel with black color, than it plots the bar like \guifco{PlotBar}. \todo{(Should be united with \guifco{PlotBar})}.
+
 }
 
 
+\ounih{Result handles}{ChromGUILib1} 
+
+\desc{This small unit organizes handles, which are accessed by other units. It was introduced to avoid too may passes between these units.}
+\uses{
+\oguif{CHamLine}, \ouni{chromlib}
+}
+\ppro{
+\unico{Pass\_CH\_Handles} and \unico{Pass\_LabPath\_Handles} receive handles to the 25 \guifco{CHamLine} instances and to the three pathlength labels in the \ogui{OPAChroma} GUI.
+
+\unico{UpdateHamilton} calls \gfcod{CHamLine}{UpdateHam} for all handles.
+
+\unico{UpdatePath} writes path length data to the label handles.
+
+\unico{UpdatePenalty} writes the current penalty to the label in the \ogui{OPAChroma} GUI.
+}
+
 \ounih{Element handles}{ChromGUILib2} 
 
+\desc{This small unit organizes handles related to the octupole SVD.
+}
 \uses{ \ouni{chromlib} }
+\ppro{
+\unico{Pass\_Osvd\_Handles} receives handles to all the components of the \ogui{OPAChroa} GUI related to octupole SVD.
+
+\unico{Osvd\_Status} contains some logic to enable or disable the components of the octupole SVD depending on the status. It further displays condition (ratio of min. to max. SVD weight factor) and number of weight factors in use.
+
+\unico{Osvd\_Wfilter} filters the SVD weights, i.e. increases or decreases the null space, depending on how many weight factors are to be cut off.
+
+}
+
+
 
 
 \oguih{Vector diagram}{OPAChromaSVector} 
@@ -1405,6 +1464,9 @@ Private procedure \guifco{UpdateVal} sets the value and recalculates the drive t
 \uses{
 \ouni{chromlib}, \ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/asfigure}
 }
+
+
+
 
 \ounih{Calculations}{chromlib} 
 
@@ -1414,7 +1476,6 @@ Private procedure \guifco{UpdateVal} sets the value and recalculates the drive t
 
 
 
-\opamodule{ChromLib.pas}{(60.2k)}{OPAglobal, OpticPlot, OPAElements, OPAtune,  MathLib, Vgraph, ASaux.}
 The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.
 
 Chromaticity up to third order is calculated from numerical differentiation \code{>ChromDiff}. Hamiltonian modes are calculated from multipole settings using the pre-calculated matrices and weight factors entered manually in order to visualize the results and combine them into a single, scalar penalty function, see Eq.\ref{eqpenal} \code{>Driveterms}. Chromaticity is corrected with two selected sextupole families using a simple $2\times 2$ matrix \code{>UpdateChromMatrix, GetLinChroma, ChromCorrect}.
@@ -1422,21 +1483,6 @@ Chromaticity up to third order is calculated from numerical differentiation \cod
 For the octupole matrix a SVD decomposition is performed for correction of the second order sextupole terms which are first order octupole terms. The SVD weight vector is provided for filtering, since usually a ``hard'' correction using all weights does not work well \code{>Oct\_SVDCMP}.
 Decapoles affect only the third order chromaticities. Other third order effects are not included.\\
 
-
-\opamodule{CHamLine.pas/.lfm}{(10.7k) [Frame]}{OPAglobal, ChromLib, ChromGUILib2, CSexLine, ASaux.}
-25 of these frames are embedded in the GUI at start. They display the results for the 25 Hamiltionian modes and allow weight and target values to be set. A change of target or weight triggers an update of the calculations \code{>UpdateWeight, UpdateTarget}. Changing any multipole manually or by the minimizer of course changes these frames.\\
-
-
-
-\opamodule{ChromGUILib1.pas}{(1.9k)}{ChromLib, CHamLine.}
-This small piece of code is mainly for passing handles to the\code{>CHamLine} frames.\\
-
-\opamodule{ChromGUILib2.pas}{(2.7k)}{ChromLib}
-Pass handles to the octupole SVD functions in order to enable automatic execution during minimization, and filters the SVD weight factors.\\
-
-
-\opamodule{OPAChromaSVector.pas/.lfm}{(3.3k)}{OPAglobal, ChromLib, MathLib, ASfigure.}
-Opens a small window to visualize the first order sextupole modes in the complex plane.
 
 
 

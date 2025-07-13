@@ -192,7 +192,7 @@ Name & class & Purpose & Size \\ \hline
 \oguif{CHamLine} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
 \ouni{ChromGUILib1} & & little helper to pass results handles & 79 \\
 \ouni{ChromGUILib2} & & little helper to pass element handles & 93 \\
-\ogui{OPAChromaSVector} & \guico{} & show Hamiltonian as complex vector & 145 \\
+\ogui{OPAChromaSVector} & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
 \ouni{chromlib} & & nonlinear dynamics calculations & 1813 \\
 \hline
 \ogui{OPAorbit} & \guico{} & orbit correction and injection & 2353 \\
@@ -1376,7 +1376,7 @@ Private procedure \guifco{UpdateVal} sets the value and recalculates the drive t
 
 \oguifh{Result indicator}{CHamLine} 
 
-\desc{25 instances of this frame are created in the \ogui{OPAChroma} GUI at start. This frame displays the result for one of the Hamiltonian modes and allows a weight factor to be set for the minimizer, and, in case of non-resonant terms, a target value, which is subtracted for penalty calculation.  The result is shown as number and as bar. The number is the true value in SI units, whereas the bar size corresponds to the value multiplied with relevant amplitudes (set in \ofld{2Jx} etc. fields in \ogui{OPAChroma}) and the relative weight factor. Changing the weight may force a resize of the bar scale and thus affects all other \oguif{CHamLine} instances too. Changing a target may affect sextupoles or octupoles if automated chromaticity correction or octupole SVD is active, therefore access to \oguif{CSexLine} instances is needed. Since \oguif{CSexLine} already uses \oguif{CHamLine} (via \ouni{ChromGUILib1}), the use is not declared in the \code{interface} section to avoid a circular reference but in the \code{implementation} section. 
+\desc{26 instances of this frame are created in the \ogui{OPAChroma} GUI at start. This frame displays the result for one of the Hamiltonian modes and allows a weight factor to be set for the minimizer, and, in case of non-resonant terms, a target value, which is subtracted for penalty calculation.  The result is shown as number and as bar. The number is the true value in SI units, whereas the bar size corresponds to the value multiplied with relevant amplitudes (set in \ofld{2Jx} etc. fields in \ogui{OPAChroma}) and the relative weight factor. Changing the weight may force a resize of the bar scale and thus affects all other \oguif{CHamLine} instances too. Changing a target may affect sextupoles or octupoles if automated chromaticity correction or octupole SVD is active, therefore access to \oguif{CSexLine} instances is needed. Since \oguif{CSexLine} already uses \oguif{CHamLine} (via \ouni{ChromGUILib1}), the use is not declared in the \code{interface} section to avoid a circular reference but in the \code{implementation} section. 
 }
 
 \uses{
@@ -1433,7 +1433,7 @@ The event handlers are trivial: The target and weight edit fields react to manua
 \oguif{CHamLine}, \ouni{chromlib}
 }
 \ppro{
-\unico{Pass\_CH\_Handles} and \unico{Pass\_LabPath\_Handles} receive handles to the 25 \guifco{CHamLine} instances and to the three pathlength labels in the \ogui{OPAChroma} GUI.
+\unico{Pass\_CH\_Handles} and \unico{Pass\_LabPath\_Handles} receive handles to the 26 \guifco{CHamLine} instances and to the three pathlength labels in the \ogui{OPAChroma} GUI.
 
 \unico{UpdateHamilton} calls \gfcod{CHamLine}{UpdateHam} for all handles.
 
@@ -1457,32 +1457,97 @@ The event handlers are trivial: The target and weight edit fields react to manua
 }
 
 
-
-
 \oguih{Vector diagram}{OPAChromaSVector} 
+
+\desc{This little form contains only a plot window to show the sextupole kicks in the complex plane in order to visualize phase cancellations. All control is done by the \ofld{Select} button in the \ogui{OPAChroma} GUI.}
 
 \uses{
 \ouni{chromlib}, \ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/asfigure}
 }
 
+\ppro{
+\guico{Init} is always called by \evcod{OPAChroma}{butSelectClick} (see above) and steps up the variable \vrcod{chromlib}{VSelect} to select one of the eight first order resonant sextupole Hamiltonians for display or to compare the sum vectors of all. The caption of the form is set to tell which mode it is, and \guico{Star} is called to do the plot.
 
+\guico{Star} plots a star diagram of complex vectors for all sextupole kicks in the lattice. The vectors are calcualted by \prcod{chromlib}{getSVector}. The colors for the sextupole families as given by the \vrcod{chromlib}{SexFam} record are the same like the sextupole knob \oguif{CSexLine} color in the \ogui{OPAChroma} GUI. The sum vector is shown as a white line, enclosed by a white circle to better see it. In comparison mode, the sum vectors for the eight first order resonant terms are shown in one diagram. The colors are the same like the colors of the corresponding \oguif{CHamLine} instances showing the first order modes.
+}
+
+\act{
+\evcodxf{on create}{FormCreate} and \evcodxf{on close}{FormClose} get and set the the user defined size of the window and save the setting on close.
+}
 
 
 \ounih{Calculations}{chromlib} 
+
+\desc{This unit is the base for all other units and GUIs of this section. It contains constants, type declarations and variables, and all the physics procedures.}
 
 \uses{
 \ouni{opticplot}, \ouni{OPAElements}, \ogui{OPAtune}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}
 }
 
 
+\pvar{
+Several array constants contain indices for calculating the Hamiltonian modes and annotations, colors etc.
 
-The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.
+Type declarations define \unico{SextupoleType} for a single sextupole kick, and \unico{(Sex, Octu, Deca) FamType} for the (sextu, octu, deca)-pole families. 
 
-Chromaticity up to third order is calculated from numerical differentiation \code{>ChromDiff}. Hamiltonian modes are calculated from multipole settings using the pre-calculated matrices and weight factors entered manually in order to visualize the results and combine them into a single, scalar penalty function, see Eq.\ref{eqpenal} \code{>Driveterms}. Chromaticity is corrected with two selected sextupole families using a simple $2\times 2$ matrix \code{>UpdateChromMatrix, GetLinChroma, ChromCorrect}.
+\unico{SM1\_row} defines one row of a matrix to get the contribution to the 10 first order modes from one of the sextuple families. \unico{SM2\_row} is for the 11 second order modes (ADTS and resonant) and for one {\em product} of two sextupole families. The corresponding matrix rows for octupoles are contained in \unico{OctuFamType} as fields \unico{omat, om1}.
 
-For the octupole matrix a SVD decomposition is performed for correction of the second order sextupole terms which are first order octupole terms. The SVD weight vector is provided for filtering, since usually a ``hard'' correction using all weights does not work well \code{>Oct\_SVDCMP}.
-Decapoles affect only the third order chromaticities. Other third order effects are not included.\\
+In the public variables section the sextupole matrices \unico{SM1, SM2} are defined as arrays of \unico{SM(1,2)\_row} of variable length, since the size will depend on the number of families. The group of variables named \unico{osvd\_\dots} are 1-dimensional arrays to pack the matrices for octupole SVD, they will be unpacked to 2-dimensional arrays in \prcod{mathlib}{SVDCMP}. Other variables of simpler types are for keeping intermediate results and control flags.
+}
 
+\ppro{
+\unico{ChromInit} restores user settings, sets up all the arrays and performs calculations which are only needed once at start like the \unico{SM1, SM2} matrices.
+
+In order to set up the arrays the element list (\unico{Ella}) is searched for sextupole families and the lattice line-up is searched for sextupoles installed. Also combined function magnets are included since they may contain a sextupole component. Before, the periodic solution is calculated, which can not fail, since the non-linear optimizaiton GUI is only enabled if a periodic solution exists. With the initial values from the periodic solution, the optical funcitons are calculated element by element. Beta functions and phases at each sextupole {\em kick} are obtained and stored in the \unico{Sextupole} array. 
+
+Optical functions are also calculated at entry, midpoint and exit of quadrupoles and bending magnets, since they contribute to chromaticity and chromatic half-integer modes (this is an approximation, therefore there may be small differences between chromaticity obtained this way and from numeric differentiation). 
+
+Octupoles are handled a bit differently than sextupoles by building the \unico{OctuFam} family array "on the fly" and not in advance, and calculating the constant part of the octupole matrix \unico{omatpre, om1pre} already here. For decapoles only a small matrix \unico{dmat} for their first order effect on third order chromaticity is calculated.
+
+When finished with collecting the elements in the lattice, a linked list of sextupole kicks belonging to the sextupole families is established and the start pointer is saved in \unico{SexFam.kid}. 
+
+Finally the sextupole matrices \unico{SM1, SM2} are calculated calling procedure \unico{S\_Matrix}, which may take a while, the periodicity factors are calculated calling \unico{S\_Period}, and the tune diagram \ouni{OPAtune} is launched.
+
+When \unico{ChromInit} is finished, all data have been established for  \guico{OPAChroma} to compose the GUI, i.e. install \guifco{CSexLine} knobs etc.\\[1ex]
+
+These procedures are called by \unico{ChromInit}:
+
+\unico{S\_Matrix} calculates the first and second order extupole matrices \unico{SM1, SM2}: a lattice may contain some 100 sextupoles, each one modelled by several kicks, so a total of about 1000 kicks. But since they belong to a small number ($\sim$~10) families, the phase and amplitude terms to be multiplied with the sextupole strength are calculated in advance and stored in the matrices. Then the optimizer will only vary the vector of family strengths and multiply it with the matrix to get the Hamiltonian modes. For the second order this procedure is mandatory to get results in acceptable time, since it contains double sums over the cross-terms from all kicks, which may result in a million terms to be added. The formulae coded are found in \cite{jbsls} and \cite{WANG}.
+
+\unico{S\_Period} calculates a complex factor to be multiplied with the Hamiltonian mode if more than one period is assumed. Calculating one period and apply this factor is much faster than calculating the whole lattice made from many identical periods. Entering zero to the procedure gives the extrapolated result for an infinite number of periods. The formula coded are found in \cite{jbsls} and \cite{inside}.
+
+\unico{S\_TestOut} writes the matrices and optics data at multipoles to a file named \code{(lattice)\_smatrix.txt} for testing or cross-check with other codes.
+
+\unico{set\_cd\_matrix} sets up a matrix for numeric differentiation of tunes to get chromaticity up to third order from a polynomial fit.\\[1ex]
+
+Following procedures are performed on user input or during optimization:
+
+\unico{UpdateChromMatrix} sets up the $2\times 2$ matrix how two selected sextupole families affect the linear chromaticity. Then the matrix is inverted and saved to be used for automated chromaticity correction.
+
+\unico{getLinChroma} calculates the linear chromaticity by adding the sextupole contribution to the initially calculated, constant contribution from quadrupoles and bending magnets.
+
+\unico{ChromCorrect} sets two selected sextupole families to adjust the chromaticity to the set values, contained in \unico{HamTarg([0],[1])} as target values.
+
+\unico{Update(SexFam, SexFamInt, OcFamInt)} set the multipoles to the given value in two ways: in the arrays initially compiled for fast calculation of the Hamiltonian modes, and in the element list \unico{Ella} for chromaticity calculation from numeric differentiation by variation of momentum offset of the periodic solution.
+
+The \unico{DriveTerms\dots} procedure calculate different groups of Hamiltonian modes as included by the check boxes in the \ofldx{"inc" row} in the \ogui{OPAChroma} GUI. These are the first order geometric terms, the first order chromatic terms, the ADTS, the second (and third) order chromaticity, the octupole resonant modes, and the square sum of all sextupole strenghts.
+
+The \unico{Penalty} functions subtracts target values (for non-resonant modes), gets the absolut value of the (complex) mode, applies relevant amplitude factors and manually set additional weights (in \oguif{CHamLine}), and finally sums up all these results quadratically to get a simple number as objective for the minimizer.
+
+\unico{HamScaling} calculates the weight factor corresponding to relevant betatron amplitudes and momentum range to be applied by \unico{Penalty}.
+
+\unico{Oct\_sv(dcmp,bskb)} contain the octupole SVD. The first procedure sets the size of the linear system to be solved by SVD depending on the number of selected Hamiltonian modes and octupole families. It builds the coefficient matrix of the system, where resonant modes get two rows, because they are complex, whereas the real-valued non-resonant modes get one row. And in packs the matrix in the 1-dimensional array \unico{osvd\_aupack} in order to run the SVD procedure from \cite{numrec} as coded in \prcod{mathlib}{SVDCMP} with variable array size. The scond procedure gets the vector of target values for the selected modes and performs the backsubstituion calling \prcod{mathlib}{SVBKSB} to set the octupole families. The information on null space, i.e. cut off weighting factors, is transmitted in the array \unico{osvd\_wuse}.
+
+\unico{getSVector} calculates the complex vectors of sextupole kicks for \ogui{OPAChromaSVector} (see above).
+
+\unico{TDiagPlot} shows a prediction of the tune footprint from ADTS and chromaticity in the tune diagram. Procedure \unico{TDiagPlotFull} refreshes the tune diagram before doing so.\\[1ex]
+
+
+\unico{ChromSaveDef} and \unico{ChromDispose}, finally called when closing \ouni{OPAChroma}, save user settings and release the dynamic arrays and linked lists, and \unico{CloseTuneDiagram} closes the tune diagram.
+}
+
+
+ 
 
 
 

@@ -15,6 +15,7 @@
 \definecolor{cadmiumgreen}{rgb}{0.0, 0.42, 0.24}
 \definecolor{burntorange}{rgb}{0.8, 0.33, 0.0}
 
+\newcommand{\redast}{{\color{red}\ast}}
 
 \newcommand\code[1]{{\tt #1}}
 
@@ -34,19 +35,19 @@
 \newcommand{\grcod}[2]{\opagui{#1}$>$\guico{#2}}
 \newcommand{\gfcod}[2]{\opaguif{#1}$>$\guifco{#2}}
 
-\newcommand{\opagui}[1]{\colorbox{blue!20}{\code{#1}}}
+\newcommand{\opagui}[1]{\colorbox{blue!20}{{\color{black}\code{#1}}}}
 %\newcommand{\opagui}[1]{\fbox{\code{#1}}}
 %\newcommand{\oguih}[1]{{\Huge ~\\ \label{#1}{\opagui{#1}}}\\}
 \newcommand{\oguih}[2]{\subsection{\label{#2}#1}{\Huge\opagui{#2}}\\}
 \newcommand{\ogui}[1]{\hyperref[#1]{\opagui{#1}}}
 
-\newcommand{\opaguif}[1]{\colorbox{violet!30}{\code{#1}}}
+\newcommand{\opaguif}[1]{\colorbox{violet!30}{{\color{black}\code{#1}}}}
 %\newcommand{\oguifh}[1]{\subsection{\Huge\label{#1}{\opaguif{#1}}}}
 \newcommand{\oguifh}[2]{\subsection{\label{#2}#1}{\Huge\opaguif{#2}}\\}
 \newcommand{\oguif}[1]{\hyperref[#1]{\opaguif{#1}}}
 
 
-\newcommand{\opauni}[1]{\colorbox{orange!30}{\code{#1}}}
+\newcommand{\opauni}[1]{\colorbox{orange!30}{{\color{black}\code{#1}}}}
 %\newcommand{\opauni}[1]{\underline{\code{#1}}}
 %\newcommand{\ounih}[1]{\subsection{\Huge\label{#1}{\opauni{#1}}}}
 \newcommand{\ounih}[2]{\subsection{\label{#2}#1}{\Huge\opauni{#2}}\\}
@@ -195,7 +196,7 @@ Name & class & Purpose & Size \\ \hline
 \ogui{OPAChromaSVector} & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
 \ouni{chromlib} & & nonlinear dynamics calculations & 1813 \\
 \hline
-\ogui{OPAorbit} & \guico{} & orbit correction and injection & 2353 \\
+\ogui{OPAorbit} & \guico{TOrbit} & orbit correction and injection & 2353 \\
 \hline
 \ogui{LGBeditor} & \guico{} & longitudinal gradient bend editor & 702 \\
 \ouni{LGBeditorLib} & & longitudinal gradient bend calculations & 471 \\
@@ -697,7 +698,7 @@ If the element is a quadrupole or a bending magnet, the GUI is extended by a plo
 
 \evcod{Done}{butOKClick} and \evcod{Apply}{butApplyClick} both read the table and update the element. The \ofld{Apply} button is only enabled in optics mode and does not close the GUI in order to view how the change affects the optics.\\ 
 The private procedure \guico{SetElem} for updating the element performs several steps:
-In edit mode, it reads the name of the element, checks if it already exists, and, if not, if this element is used in segments, and asks, if all these entries should be renamed too. Then, in both modes, the table is read and the values are assigned to the element depending on its type. This includes conversion from convenient input units to internal SI-units. The validity of data is checked, i.e. if values are valid numbers, and if expressions can be executed without error. If everything is ok, then, in edit mode, data are written to the selected element in the \unico{Elem} array and updated in the elements list of the calling \ogui{opamenu} GUI. In optics mode, the element in the \unico{Ella} array is updated, the optics is recalculated calling \prcod{opticsplot}{OpticReCalc}, and the plot in the calling \ogui{opticview} GUI is updated by sending it a \code{repaint} event.\\
+In edit mode, it reads the name of the element, checks if it already exists, and, if not, if this element is used in segments, and asks, if all these entries should be renamed too. Then, in both modes, the table is read and the values are assigned to the element depending on its type. This includes conversion from convenient input units to internal SI-units. The validity of data is checked, i.e. if values are valid numbers, and if expressions can be executed without error. If everything is ok, then, in edit mode, data are written to the selected element in the \unico{Elem} array and updated in the elements list of the calling \ogui{opamenu} GUI. In optics mode, the element in the \unico{Ella} array is updated, the optics is recalculated calling \prcod{opticplot}{OpticReCalc}, and the plot in the calling \ogui{opticview} GUI is updated by sending it a \code{repaint} event.\\
 For variables, the private procedure \guico{SetVar} performs similar actions: In edit mode it reads the name, checks if it already exists, and, if not, it this variable is used in any expression, and asks if all these entries should be renamed too. Then in both modes, its expression is read from the table. (If the expression can be converted into a valid number, this value is assigned and the expression set to an empty string to identify a primary variable, which is a pure number.) Then, depending on the mode, the \ogui{opamenu} list is updated or the \ogui{opticview} plot is updated.
 
 \evcod{Cancel}{butCancelClick} does nothing but closing the GUI.
@@ -863,7 +864,7 @@ If the knob is connected to a variable, changing it may affect other knobs conne
 
 \evcod{dp/p[\%]$=$}{but\_dppClick} unhides an edit field to enter a value for momentum offset, and a check box to select if one calculation for $Delta p/p$  or three calculations for $0,\pm\Delta p/p$ are to be done.
 
-\evcod{Apply}{butapplyClick} (or \evcod{Close}{butcloClick}) starts the calculation calling private procedure \guico{Go} (and closes this GUI). Before starting the calculation several flages are set depending on the mode (optics with or without coupling, orbit, injection) and the initial conditions. The procedures \prcod{OpticCalc} or \prcod{OrbitCalc} and, afterwards, the corresponding plot procedures are called from \ouni{opaplot}.
+\evcod{Apply}{butapplyClick} (or \evcod{Close}{butcloClick}) starts the calculation calling private procedure \guico{Go} (and closes this GUI). Before starting the calculation several flages are set depending on the mode (optics with or without coupling, orbit, injection) and the initial conditions. Afterwards, the plot procedures \prcod{opticplot}{OpticCalc} or \prcod{opticplot}{OrbitCalc} are called.
 
 \evcod{Exit}{butexitClick} closes this GUI and the parent GUI (\ogui{opticview} or \ogui{OPAorbit}).
 
@@ -953,7 +954,7 @@ Several variables used by \ogui{opticview}, \ogui{Opticstart} etc. are defined i
 
 \unico{setTunePlotHandle} receives a handle to the tune diagram GUI \ogui{OPAtune} in order to plot working points.
 
-\unico{setOrbitHandle} receives a handle to the \ogui{OPAorbit} GUI. Actually it is only needed to send it a \code{repaint} event, it will then get and plot the data from \ouni{opticsplot}.\\
+\unico{setOrbitHandle} receives a handle to the \ogui{OPAorbit} GUI. Actually it is only needed to send it a \code{repaint} event, it will then get and plot the data from \ouni{opticplot}.\\
 
 \underline{Beam dynamics procedures:}
 
@@ -974,7 +975,7 @@ $\alpha_x=\alpha_y=D_x'=0$ and works only for uncoupled lattices. It is rarely u
 
 \unico{LinOp} is a {\em private} procedure to propagate the beta functions through the lattice and save the values after each element to the \unico{Opval} array by calling procedure \unico{StoVar}. Usually it would start at the begin of the lattice with initial conditions from the periodic solution or entered manually. But it may also start at an optics marker and propagate forward and backward to end and start of lattice. Care is taken to handle inverted elements and derivatives of optical parameter and to sum up integrals correctly. Depending on the input flag \code{latmode} only the beta functions and dispersions are calculated or chromaticities and radiation integrals are calculated too by passing the flag to the \unico{Lattel} routine, which passes it further to the element propagation routines.
 
-\unico{OpticCalc} performs the full linear optics calculation by calling \unico{ClosedOrbit}, \unico{Periodic} and \unico{LinOp}. Afterwards, the working point is plotted to the tune diagram (in case of periodic solution only) and the table in \ogui{optiview} is filled calling procedures \unico{FillBeamTab} and \unico{FillBetaTab}. \\
+\unico{OpticCalc} performs the full linear optics calculation by calling \unico{ClosedOrbit}, \unico{Periodic} and \unico{LinOp}. Afterwards, the working point is plotted to the tune diagram (in case of periodic solution only) and the table in \ogui{opticview} is filled calling procedures \unico{FillBeamTab} and \unico{FillBetaTab}. \\
 \todo{The code is a bit messy due to the different cases it has to handle~-- periodic/symmetric solution or forward/backward from an optics marker, how many calculations to do, on- or off-momentum.} 
 
 \unico{OrbitCalc} is a simplified version of \unico{OpticCalc} used by \ogui{OPAorbit} for calculation of orbit only. An additional feature is the ability to do several turns which is useful in injection simulation.
@@ -1227,18 +1228,17 @@ For "playing" with the bucket, the viewer may also be used with manual input for
 \uses{\ouni{OPAglobal}, \ouni{mathlib}, \ouni{../com/conrect}, \oguif{../com/asfigure}, \ouni{../com/asaux}} 
 
 \act{
-\evcodx{On show}{FormShow} performs all initializations when the GUI becomes visible:  private procedure \guico{Layout} is called to arrange the components (although this GUI does not react to resize by user), user settings are loaded and filled into the edit fields. With this settings, the bucket is calculated immediately and shown by calling private \ogui{CalcBucket} and \ogui{MakePlot}:
+\evcodx{On show}{FormShow} performs all initializations when the GUI becomes visible:  private procedure \guico{Layout} is called to arrange the components (although this GUI does not react to resize by user), user settings are loaded and filled into the edit fields. With this settings, the bucket is calculated immediately and shown by calling private \guico{CalcBucket} and \guico{MakePlot}:
 
 \guico{CalcBucket} performs all the calculations as described in \cite{inside}. This also includes the call to \prcod{../com/concrect}{conrec} to get the equipotential contours, because from these the energy acceptance and bunch length are estimated. However, this requires the central fixpoint to be elliptic (i.e. no overstretched bunches). And bunch length can be estimated only if there is a value for energy spread from a previous optics run.
 
 \guico{MakePlot} just plots the results and writes them to labels in the GUI.
 
+\evcodx{On paint}{FormPaint} just calls \guico{MakePlot} again.
 
-\evcodx{On paint}{FormPaint} just calls \ogui{MakePlot} again.
+\evcod{Show bucket}{butconClick} calls \guico{CalcBucket} and \guico{MakePlot} again.
 
-\evcod{Show bucket}{butconClick} calls \ogui{CalcBucket} and \ogui{MakePlot} again.
-
-\evcod{EPS}{butepsClick} sets mode to postscript export and calls {MakePlot} to write file \code{(lattice name)\_bucket.eps}.
+\evcod{EPS}{butepsClick} sets mode to postscript export and calls \guico{MakePlot} to write file \code{(lattice name)\_bucket.eps}.
 
 \evcod{mode}{butmodClick} toggles between "lattice" and "play" mode, i.e using momentum compaction coefficients from the lattice or from manual input. 
 
@@ -1344,11 +1344,11 @@ If there are octupoles in the lattice, controls for the SVD appear in the GUI. I
 }
 
 \ppro{
-This frame contains several public procedures, because the parent GUI \ogui{OPAchroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
+This frame contains several public procedures, because the parent GUI \ogui{OPAChroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
 
-\guifco{Init} called by \ogui{OPAchroma} when creating the instance receives a type information if it is sextupole, octupole or decapole and an index for identification. It then gets the corresponding element family and its value, sets the name label and strength field (calling \guifco{SetVal}), and sets the appearance depending on the type.
+\guifco{Init} called by \ogui{OPAChroma} when creating the instance receives a type information if it is sextupole, octupole or decapole and an index for identification. It then gets the corresponding element family and its value, sets the name label and strength field (calling \guifco{SetVal}), and sets the appearance depending on the type.
 
-\guifco{Brothers}, also called by \ogui{OPAchroma} receives handles to all instances of \oguif{CSexLine} including the instance itself.
+\guifco{Brothers}, also called by \ogui{OPAChroma} receives handles to all instances of \oguif{CSexLine} including the instance itself.
 
 \guifco{SetSize} places the components inside the frame depending on the available space, which depends on the size of the parent GUI and on the number of knobs.
 
@@ -1360,7 +1360,7 @@ This frame contains several public procedures, because the parent GUI \ogui{OPAc
 
 \guifco{UpdateValbyMin} is used by the minimizer function \grcod{OPAChroma}{PenaltyFunction} to only update the value but not trigger any calculation.
 
-\guifco{mySetColor} changes the appearance, called by \ogui{OPAchroma} if the knob is reserved (e.g. for chromaticity correction).
+\guifco{mySetColor} changes the appearance, called by \ogui{OPAChroma} if the knob is reserved (e.g. for chromaticity correction).
 
 \guifco{Lock,UnLock} locks or unlocks a knob. If locked the frame components are disabled. In case of an octupole family already included in the SVD, the SVD is set-up again without this family.
 
@@ -1384,13 +1384,13 @@ Private procedure \guifco{UpdateVal} sets the value and recalculates the drive t
 }
 
 \ppro{
-This frame contains several public procedures, because the parent GUI \ogui{OPAchroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
+This frame contains several public procedures, because the parent GUI \ogui{OPAChroma} and other units in this section have to control it. Further, the instances in the parent GUI have to control each other.\\
 
-\guifco{Init} called by \ogui{OPAchroma} when creating the instance sets default values and the appearance to distinguish resonant from non-resonant modes.
+\guifco{Init} called by \ogui{OPAChroma} when creating the instance sets default values and the appearance to distinguish resonant from non-resonant modes.
 
 \guifco{SetLab} writes the name of the mode to the name label.
 
-\guifco{Brothers}, also called by \ogui{OPAchroma} receives handles to all instances of \oguif{CHamLine} including the instance itself.
+\guifco{Brothers}, also called by \ogui{OPAChroma} receives handles to all instances of \oguif{CHamLine} including the instance itself.
 
 \guifco{getChromSexHandles} receives handles to the two sextupole families assigned to automated chomaticity correction.
 
@@ -1404,7 +1404,7 @@ This frame contains several public procedures, because the parent GUI \ogui{OPAc
 
 \guifco{SetWeight} sets the weight factor field and its font color.
 
-\guifco{UpdateWeight} accepts a new weight factor and adjusts the scale of {\em all} \oguif{TCHamLine} instances to maintain comparability of the bars. 
+\guifco{UpdateWeight} accepts a new weight factor and adjusts the scale of {\em all} \oguif{CHamLine} instances to maintain comparability of the bars. 
 If automated octupole SVD is active, a change of weight will affect its result, therefore the SVD is repeated. This will change the second order modes, so the scale of all instances is adjusted again.
 
 \guifco{SetTarget} sets the target field (non-resonant modes only).
@@ -1413,7 +1413,7 @@ If automated octupole SVD is active, a change of weight will affect its result, 
 
 \guifco{UpdateHam} writes the value field and calls private procedure \guifco{PlotBar} to plot the bar.
 
-\guifco{mySetColor} changes the appearance, called by \ogui{OPAchroma} if the mode is to be highlighted for various reasons.
+\guifco{mySetColor} changes the appearance, called by \ogui{OPAChroma} if the mode is to be highlighted for various reasons.
 
 \guifco{MinInclude} sets the color to grey and disables all components, if this mode is not included in penalty calculation.
 }
@@ -1448,7 +1448,7 @@ The event handlers are trivial: The target and weight edit fields react to manua
 }
 \uses{ \ouni{chromlib} }
 \ppro{
-\unico{Pass\_Osvd\_Handles} receives handles to all the components of the \ogui{OPAChroa} GUI related to octupole SVD.
+\unico{Pass\_Osvd\_Handles} receives handles to all the components of the \ogui{OPAChroma} GUI related to octupole SVD.
 
 \unico{Osvd\_Status} contains some logic to enable or disable the components of the octupole SVD depending on the status. It further displays condition (ratio of min. to max. SVD weight factor) and number of weight factors in use.
 
@@ -1561,22 +1561,100 @@ The \unico{Penalty} functions subtracts target values (for non-resonant modes), 
 
 \oguih{Orbit and injection}{OPAorbit} 
 
+\desc{Dpending on a flag set at start, this GUI is used for orbit or injection studies. 
 
-
-
-\opamodule{OPAorbit.pas/.lfm}{(73.0k)}{OPAglobal, OpticPlot,  OpticStart, Knobframe, MathLib, ASfigure, ASaux.}
-This unit calculates the beam orbit. It is used to either study orbit distortion and correction (usually in periodic mode) or to study injection (usually in forward mode)~-- a corresponding flag is set at start. Most procedureds in the unit are used to set up the rather complex GUI with knobs for correctors, kickers and BPMs and various panels for orbit correction, plotting or injection studies.
-
-In orbit mode, correlated misalignments are applied, the response matrix is calculated and pseudo-inverted using an SVD procedure in order to correct the orbit. A loop function may run several error seeds to obtain some statistics.
+In orbit mode, correlated misalignments are applied, the response matrix is calculated and pseudo-inverted using an SVD procedure in order to correct the orbit. A loop function may run several error seeds to obtain some statistics. Note, that correctors and BPMs defined with reserved names \code{CH,CV,MON} in the lattice file are internally expanded to a set of individual elements, e.g. \code{CH001\dots} when unpacking the lattice by \prcod{OPAglobal}{MakeLattice}.
 
 In injection mode, kickers may be synchronized for correct timing, and the injected (and/or stored) beam trajectory is calculated for a few turns.
 
-In both modes, when leaving the unit, results for misalignments and corrector settings, or for kicker settings, are saved internally and will be used in subsequent linear optics calculations or tracking.
+In both modes, when leaving the unit, results for misalignments and corrector settings, or for kicker settings, are saved internally and will be used in subsequent linear optics calculations or tracking. \todo{There are problems with misalignments in tracking, not yet solved.}
 
-\todo{There are problems with misalignments in tracking, not yet solved.}
+The GUI contains two plot windows for horizontal and vertical orbit and a line-up of elements, which may be dragged to knobs. These are correctors and beam position monitors (BPM) in orbit mode, and kicker magnets and BPMs in injection mode. In orbit mode a panel becomes visible which contains several controls to set misalignments, correct the orbit, get orbit statistics and switch the plot mode. In injection mode a simpler panel appears in the same place which contains controls to set kicker timing and select turn number.
 
-Note, that correctors and BPMs defined with reserved names {\tt CH,CV,MON} in the lattice file are internally expanded to a set of individual elements, e.g. {\tt CH001...} when unpacking the lattice \code{OPAGlobal>MakeLattice}.
+\ogui{Opticstart} is called in both modes to set the initial conditions, where the periodic option is disabled in injection mode, because it makes no sense.
 
+\todo{\ogui{OPAorbit} is similar to \ogui{opticview} for linear optics design, because both show the orbit and provide clickable elements to be dragged to knobs. Furthermore, data are transferred from one to the other to calculate the optics on a corrected orbit. Thus it would make sense to combine both GUIs into one, perhaps using tabs for the different modes. However, \ogui{OPAorbit} uses two \oguif{../com/asfigure} instances for plotting and the clickable elements are realized as \code{TShape} objects on the form, underneath the plot, whereas \ogui{opticview} has its own, much more complex plot window with bars inside the plot for the elements.}
+}
+
+\uses{
+\oguif{knobframe},  \ouni{opticplot}, \ouni{Opticstart}, \ouni{OPAglobal}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}
+}
+
+\ppro{
+\guico{Start} receives a flag to set orbit or injection mode. Then the form passes a handle to itself to \ogui{opticplot} to enable a repaint. The girders are set up calling \prcod{OPAglobal}{GirderSetup}. Then the lattice is searched for correctors, resp. kickers and monitors, arrays are declared to manage them, and symbols are created on the form. After restoring user settings and filling edit fields, \ogui{Opticstart} is launched to get started.
+}
+
+\act{}
+
+\underline{Actions available in both modes}
+
+\todo{Some of these actions(marked by $\redast$) don't make sense in injection mode and should be hidden or disabled. The historical reason is, that the orbit mode was first and the injection mode was "squeezed" in later.}
+
+\evcodx{repaint}{FormPaint} plots the orbit. The procedure is called by \prcod{opticplot}{PlotOrbit} via the handle to the form passed at initialization. Orbit calculation and plotting is triggered by  \ogui{Opticstart} and also by some components in the GUI. Plotting is done by private procedure \guico{Makeplot} which calls several other private procedures: \guico{Get (Orbit, Cor, Mis) Max} get the maxima of data for plot scaling, \guico{plot(X,Y)} plot the orbit, \guico{WeightPlot} shows a histogram of orbit correction SVD weighting factors, \guico{BPMshow} fills the BPM readout panel,  \guico{LabelShow} updates the correction status and \guico{CodStat} fills a panel with orbit statistics data. In injection mode some of these procedures do nothing.
+
+\evcodx{symbols}{BoxMouse(Down, Up)} drag an element shown as symbol (\code{TShape}) to either a knob (class \oguif{knobframe}) if it is an active element, i.e. corrector or kicker, or, if it is a BPM to the BPM panel \guico{panbpm} to show its readout.
+
+\evcod{$<\!\!-\!\!>$ , $>\!\!-\!\!<$ , $--\!\!>$ , $<\!\!--$}{butzooClick} are zoom functions, similar but simpler than in \ogui{opticview}.
+
+"BPM" panel \guico{panbpm}:
+
+$\redast$ \evcod{Orbit/Reference}{butBPMmpodeClick} toogles between "Orbit" mode, where the BPM shows the readout (also $x',y'$ which a real BPM can't read), and "Reference" mode, where values for $x, y$ can be entered to be used as a reference in orbit correction.
+
+$\redast$ \evcod{Set}{butBPMrefClick} saves the reference.
+
+"Start and statistics" panel \guico{panctr}:
+
+\evcod{Start}{butStaClick} launches the \ogui{Opticstart} start panel again to change initial conditions etc. \todo{BUG: plot error when starting from an optics marker.}
+
+\evcod{include nonlinear elements}{chkSextClick} switches on/off nonlinear elements for the calculations.
+
+$\redast$ \evcod{BPM/all/Cor}{butCODstatClick} selects which statistical data to show in the table underneath the button: BPM only, all elements or corrector strength.
+
+"Show" panel \guico{panplo}:
+
+$\redast$ \evcod{Orbit+BPMs, Correctors, Misalignments}{butplotOCClick} selects the plot mode: orbit, corrector strengths or misalignments.
+
+$\redast$ \evcod{keep max.}{chkKeepMaxClick} freezes the maximum value for the plot, may be used to avoid rescaling after orbit correction.
+
+\evcod{$-\!\!>$ EPS}{butEPSClick} exports the current plot to an \code{.eps} file.\\[1ex]
+
+
+\underline{Actions available in orbit mode only}
+
+"Misalign and correct" panel \guico{panmis}:
+
+\evcod{set}{butMisalClick} reads misalignment data from the edit fields and calls private procedure \guico{SetMisalignments} to set correlated Gaussian distributed misalignment with the rms values from the edit fields and cut at a number of sigma also given there. First, the girders are set, then the secondary girders supported by other girders, then compound elements, i.e. series of lattice elements with no space between which are assumed to be one rigid body, and finally individual single elements. Finally the orbit is calculated and shown. The edit fields contain data for the girder ends, for the elements relative to the girder and for the joint play of a virtual link assumed to connect girders ("train link"). Misalignments are sway and heave, and for girders and elements also roll. The \ofld{El/Gird} field contains a percentage how to reduce the misalignment of elements on girder relative to single elements, assuming that they may be aligned better. The \ofld{seed} field takes any number to generate different random sees for testing.
+
+\evcod{include BPM}{butMonabsClick} includes or excludes the BPMs from misalignments, i.e. if their readings are absolute or relative to their own misalignments, which is the realistic case. The caption of the button is changed to "exclude" if BPMs are absolute.
+
+\evcod{zero}{butZeroClick} and \evcod{re-set}{butSetAgainClick} sets all misalignments to zero or restores them again.
+
+\evcod{Correct}{butCorClick} performs the orbit correction: first (procs \guico{PrepOrbCorr}, \guico{GetResponseMatrix}), if not yet done, the arrays for the SVD are dimensioned, the response matrix is set up based on the analytical, linear lattice model, and the SV decomposition is done calling \prcod{mathlib}{SVDCMP}. \\
+Then (\guico{OrbitCorrection}) the orbit is corrected by passing the target vector of BPM references to \prcod{mathlib}{SVBKSB}. 
+The correction result is evaluated (\guico{CodStat}, \guico{CodStatCalc}) and the label \guico{LabOrbStat} is set to "zeroed" if all BPM read zero, to "minimized" if correction converged with some residual (this is the case if there are more BPMs than correctors), to "too many it." if correction did not converge within the limited number of iterations, and to "failed!" if it diverged and the orbit became too large. Statistics results are written to the table in the statistics panel \guico{panctr}, showing mean, rms and max value for BPM readings, orbit everywhere and corrector strengths.\\
+Finally \guico{MakePlot} is called to show the corrected orbit, it contains the procedure \guico{WeightPlot} which plots a histogram of weight factors, showing in darker color weight factors which were set to zero (in case a more robust but incomplete correction is tried).
+
+\evcod{Loop}{butLoopClick} performs a series of orbit corrections to get statistical data. When pressing the button, at first the seed field changes to \ofld{Nseed} and the number inside is the number of seeds to do, and the button caption changes to \ofld{Run}.\\
+Pressing again starts the loop and the caption is set to \ofld{Break}. Pressing again while running aborts the loop, otherwise it continues to the end and the caption becomes \ofld{Done}. Pressing again sets the caption back to \ofld{Loop}. Internally this is controlled by variable \guico{loopstatus}. \\
+During running, the seed index is shown, and in the OPA log window in the main GUI \ogui{opamenu} the results of the seeds are listed. When done, the statistics data have a different meaning than for single orbit correction (\guico{LoopStatCalc}): "mean" is the mean rms orbit from all seeds, "rms" is the maximum of the rms values, and "max" is the absolute maximum.
+
+\evcod{Corr=0}{butCorZeroClick} and \evcod{BPM=0}{butBPMZeroClick} set all correctors or all BPM references to zero.
+
+\evcod{X}{butOcoWplotClick} toggles betwenn horizontal and vertical weight factor plot, button caption changes between \ofld{X} and \ofld{Y}.
+
+\evcodx{slider}{sliderWChange} sets all weighting factors above the slider to zero.\\[1ex]
+
+
+
+\underline{Actions available in injection mode only}
+
+"Pulsed magnets" panel \guico{pankick}:
+
+\evcod{ON}{butKickClick} activates the kickers, sets the caption of the button and enables the multi-turn buttons if the lattice is circular. Then the orbit is calculated and shown.
+
+\evcod{Sync}{butSyncClick} synchronizes the kicker by calculating the time of flight from the start of the lattice to the entry to the kicker and sets its field \unico{delay} to the same value. If the kicker is of finite length, \prcod{OPAElements}{Kicker} takes care of internal time of flight.
+
+\evcod{$-$,$+$}{butKickT(m,p)Click} increase the number of turns (max 3) to be calculated and plotted in a circular lattice. \prcod{opticplot}{OrbitCalc} is called with a negative number used as a switch to count turns and start at begin of lattice in successive turns.
 
 
 

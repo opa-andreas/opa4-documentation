@@ -53,6 +53,10 @@
 \newcommand{\ounih}[2]{\subsection{\label{#2}#1}{\Huge\opauni{#2}}\\}
 \newcommand{\ouni}[1]{\hyperref[#1]{\opauni{#1}}}
 
+\newcommand{\tabouni}[1]{\ref{#1} & \ouni{#1}}
+\newcommand{\tabogui}[1]{\ref{#1} & \ogui{#1}}
+\newcommand{\taboguif}[1]{\ref{#1} & \oguif{#1}}
+
 
 %\newcommand{\uses}[1]{\subsubsection{Uses} #1}
 %\newcommand{\uses}[1]{\rule[3pt]{\textwidth}{0.2pt} \\ {\bf Uses: } #1}
@@ -155,60 +159,60 @@ Editors for the RF bucket and longitudinal gradient bends are explained in secti
 \caption{OPA units overview}
 \label{tabover}
 {\small
-\begin{tabular}{lllr}
-Name & class & Purpose & Size \\ \hline
-\ouni{OPAglobal} & & global variables and procedures & 2986 \\
-\ogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
-\ouni{mathlib} & & mathematical library & 2075 \\
-\oguif{../com/Vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
-\oguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
-\ouni{../com/conrect} & & contour plot calculation & 332 \\
-\ouni{../com/asaux} & & little helpers & 349 \\
+\begin{tabular}{llllr}
+Sec & Name & class & Purpose & Size \\ \hline
+\tabouni{OPAglobal} & & global variables and procedures & 2986 \\
+\tabogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
+\tabouni{mathlib} & & mathematical library & 2075 \\
+\taboguif{../com/Vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
+\taboguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
+\tabouni{../com/conrect} & & contour plot calculation & 332 \\
+\tabouni{../com/asaux} & & little helpers & 349 \\
 \hline
-\ouni{opalatticefiles} & & file reading and writing & 1839 \\
-\ogui{texteditor} & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
-\ogui{OPAEditor} & \guico{TFormEdit} & interactive lattice editor  & 346 \\
-\ogui{EdElCreate} & \guico{TEditElemCreate} & creation of an element & 144 \\
-\ogui{EdElSet} & \guico{TEditElemSet} & edit element parameters & 861 \\
-\ogui{EdSgSet} & \guico{TEditSegSet} & edit segment parameters & 444 \\
+\tabouni{opalatticefiles} & & file reading and writing & 1839 \\
+\tabogui{texteditor} & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
+\tabogui{OPAEditor} & \guico{TFormEdit} & interactive lattice editor  & 346 \\
+\tabogui{EdElCreate} & \guico{TEditElemCreate} & creation of an element & 144 \\
+\tabogui{EdElSet} & \guico{TEditElemSet} & edit element parameters & 861 \\
+\tabogui{EdSgSet} & \guico{TEditSegSet} & edit segment parameters & 444 \\
 \hline
-\ogui{opticview} & \guico{Toptic} & linear optics design & 1143 \\
-\oguif{knobframe} & \guifco{TKnob} & slider to set element property & 421 \\
-\ogui{Opticstart} & \guico{Tstartsel} & setting for start parameters & 615 \\
-\ogui{OpticEnvel} & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
-\ogui{OpticTune} & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
-\ogui{OpticWOMK} & \guico{TWOMK} & write optics markers & 125 \\
-\ouni{opticplot} & & linear beam dynamics calculations & 2840 \\
-\ouni{OPAElements} & & element propagation calculations & 2387 \\
-\ogui{OpticMatch} & \guico{TMatch} & linear optics matching & 1457 \\
-\ogui{OpticMatchScan} & \guico{TsetMatchScan}& parameter scan & 119 \\
-\ogui{OPAtune} & \guico{TTunePlot} & show the tune diagram & 634 \\
+\tabogui{opticview} & \guico{Toptic} & linear optics design & 1143 \\
+\taboguif{knobframe} & \guifco{TKnob} & slider to set element property & 421 \\
+\tabogui{Opticstart} & \guico{Tstartsel} & setting for start parameters & 615 \\
+\tabogui{OpticEnvel} & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
+\tabogui{OpticTune} & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
+\tabogui{OpticWOMK} & \guico{TWOMK} & write optics markers & 125 \\
+\tabouni{opticplot} & & linear beam dynamics calculations & 2840 \\
+\tabouni{OPAElements} & & element propagation calculations & 2387 \\
+\tabogui{OpticMatch} & \guico{TMatch} & linear optics matching & 1457 \\
+\tabogui{OpticMatchScan} & \guico{TsetMatchScan}& parameter scan & 119 \\
+\tabogui{OPAtune} & \guico{TTunePlot} & show the tune diagram & 634 \\
 \hline
-\ogui{OPAmomentum} & \guico{Tmomentum} & momentum dependence and optimization & 949 \\
-\ouni{MomentumLib} &  & momentum dependent calculations & 480 \\
-\ogui{Bucket} & \guico{TBucketView} & plot RF bucket & 640 \\
+\tabogui{OPAmomentum} & \guico{Tmomentum} & momentum dependence and optimization & 949 \\
+\tabouni{MomentumLib} &  & momentum dependent calculations & 480 \\
+\tabogui{Bucket} & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
-\ogui{OPAChroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
-\oguif{CSexLine} & \guico{TCSex} & controller for nonlinear element & 454 \\
-\oguif{CHamLine} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
-\ouni{ChromGUILib1} & & little helper to pass results handles & 79 \\
-\ouni{ChromGUILib2} & & little helper to pass element handles & 93 \\
-\ogui{OPAChromaSVector} & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
-\ouni{chromlib} & & nonlinear dynamics calculations & 1813 \\
+\tabogui{OPAChroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
+\taboguif{CSexLine} & \guico{TCSex} & controller for nonlinear element & 454 \\
+\taboguif{CHamLine} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
+\tabouni{ChromGUILib1} & & little helper to pass results handles & 79 \\
+\tabouni{ChromGUILib2} & & little helper to pass element handles & 93 \\
+\tabogui{OPAChromaSVector} & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
+\tabouni{chromlib} & & nonlinear dynamics calculations & 1813 \\
 \hline
-\ogui{OPAorbit} & \guico{TOrbit} & orbit correction and injection & 2353 \\
+\tabogui{OPAorbit} & \guico{TOrbit} & orbit correction and injection & 2353 \\
 \hline
-\ogui{LGBeditor} & \guico{} & longitudinal gradient bend editor & 702 \\
-\ouni{LGBeditorLib} & & longitudinal gradient bend calculations & 471 \\
+\tabogui{OPAtrackP} & \guico{} & phase space tracking & 1422 \\
+\tabogui{OPAtrackDA} & \guico{} & dynamic aperture tracking & 1666 \\
+\tabogui{OPAtrackT} & \guico{} & Touschek tracking & 1726 \\
+\tabouni{tracklib} & & particle tracking calculations & 1502 \\
 \hline
-\ogui{OPAtrackP} & \guico{} & phase space tracking & 1422 \\
-\ogui{OPAtrackDA} & \guico{} & dynamic aperture tracking & 1666 \\
-\ogui{OPAtrackT} & \guico{} & Touschek tracking & 1726 \\
-\ouni{tracklib} & & particle tracking calculations & 1502 \\
+\tabogui{LGBeditor} & \guico{} & longitudinal gradient bend editor & 702 \\
+\tabouni{LGBeditorLib} & & longitudinal gradient bend calculations & 471 \\
 \hline
-\ogui{OPAGeometry} & \guico{} & geometric machine layout and matching & 2010 \\
-\ogui{OPACurrents} & \guico{} & export magnet currents to machine control & 303 \\
-\ouni{opatest} & & test of new features & 472 
+\tabogui{OPAGeometry} & \guico{} & geometric machine layout and matching & 2010 \\
+\tabogui{OPACurrents} & \guico{} & export magnet currents to machine control & 303 \\
+\tabouni{opatest} & & test of new features & 472 
 \end{tabular}
 }
 \end{table}
@@ -1657,6 +1661,98 @@ During running, the seed index is shown, and in the OPA log window in the main G
 \evcod{$-$,$+$}{butKickT(m,p)Click} increase the number of turns (max 3) to be calculated and plotted in a circular lattice. \prcod{opticplot}{OrbitCalc} is called with a negative number used as a switch to count turns and start at begin of lattice in successive turns.
 
 
+\section{\label{sectrac}Tracking}
+There are three GUIs for phase space tracking, dynamic aperture and Touschek lifetime, and a physics unit used by all three. 
+
+\oguih{Phase space}{OPAtrackP} 
+\uses{\ouni{tracklib}, \ouni{OPAglobal}, \ogui{OPAtune}, \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+
+/desc{
+The GUI for phase space tracking contains four plot windows for the transverse phase spaces (\guico{psx}, \guico{psy}) and for the particle spectra (\guico{ftx}, \guico{fty}), and six panels to set parameters or show results. Single particles are started from coordinates entered manually in edit fields or passed from mouse clicks in the phase space plots.  Amplitude dependent tune shifts (ADTS) are obtained by stepping up particle coordinates. For simulation of injection, a beam ellipse populated with many particles can be tracked. 
+
+The six panels are \guico{PanParam} to set tunes and apertures, \guico{PanCtrl} to set start coordinates, \guico{PanRes} to show a table of tunes found in the spectra, \guico{PanFFT} to set parameters of the Fast Fourier Transform (FFT), \guico{PanTush} to set parameters for the ADTS loop and \guico{PanBeam} to set parameters for the beam ellipse. From the last four only two are visible at a time.}
+
+\ppro{
+\guico{Start} receives a handle to the tune diagram \ogui{OPAtune}. The combobox \guico{comTurns} is populated with powers of 2 for the available number of turns. User settings are restored. The four \oguif{../com/asfigure} instances for plotting are assigned and handles are passed to the edit fields for starting coordinates in order to later read coordinates from clicking into the plot. Flags and fields are initialized. Finally, \prcod{tracklib}{Initdpp} is called, which provides the periodic solution (it will exist, otherwise the tracking option would not be enabled in \ogui{opamenu} and the physical aperture limitations projected to the track point. The \ofldx{onPaint} event of the plot areas will then show empty beam ellipses corresponding to the linear physical limit. \todo{BUG: at start the plot sometimes appears too small, ok after touching (resizing) the GUI.}
+}
+
+\act{}
+
+Note: a common event handler \guico{ediAction} is used for most edit fields in this GUI. It is called by \code{KeyPress} or \code{Exit} events, i.e. when a key is pressed in the field or the cursor leaves the field.
+
+
+\underline{Panel \guico{PanParam}}
+
+\evcod{Nturns}{comTurnsChange} gets the number of turns from the selected item. It is always a power of 2 as required by the FFT.\\[1ex]
+
+\evcod{Element apertures}{cbxElAperClick} toogles between using the apertures of the elements or the values in the \ofld{Ax[mm]}, \ofld{Ay[mm]} edit fields before calling \prcod{tracklib}{Initdpp} again to calculate the physical limit for tracking. The \guico{psx,psy} figures are initialized again.
+
+\evcod{A(x,y)[mm]}{ediAction[edi(x,y)aper]} has the same effect when entering a value in the edit fields. 
+
+\evcod{Trackpoint}{ediAction[edistartpos]} takes the value from the edit field as trackpoint position (can be anywhere in the lattice, even inside an element) and calls \prcod{tracklib}{Initdpp} again to get the optics and aperture limit at that location. Before the input is checked to be within the length of the active lattice segment.
+
+\evcod{4D}{butT6Click} sets tracking mode from 4- to 6-dimensional and changes the button caption. \todo{Experimental mode, incomplete implementation!}\\[1ex]
+
+\underline{Panel \guico{PanCtrl}}
+
+
+\evcod{dp/p[\%]}{ediAction[edidpp]} calls \prcod{tracklib}{Initdpp} again for the momentum offset as entered. The periodic solution may be lost, if the value is too large, then a warning pops up. 
+
+\evcod{Run}{butRunClick} reads the coordinates from the four edit fields \ofld{X[mm]} etc. These values may have been entered manually or by a \guifco{pMouseDown} event in the \guico{psx,psy} plot areas (see \oguif{../com/asfigure} above). Before starting tracking, the particle amplitude is calculated using the local beta functions, and an ellipse is drawn for comparison with the aperture limitation. Then the function \guico{Track} is called to track the given number of turns by calling 
+\prcod{tracklib}{Oneturn} in a loop, and to plot the coordinates during tracking. When finished it will return \code{false}, when the particle was lost it will return \code{true}. If succesfull, private procedure \guico{Spectrum} is called, which applies a sine-window to the data for peak interpolation before calling \prcod{tracklib}{TWOFFT} and \unico{FFTtoAmp} to get horizontal and vertical particle spectra as real amplitudes. Then private \guico{FFTplot} is called: it plots the spectra, tries to guess the resonances corresponding to the peaks found by calling \prcod{tracklib}{FindPeaks} and \unico{ResoGuess}, and shows the results in the spectrum plots and in the table \guico{resgrid} in panel \guico{PanRes}. The tune indentified as fundamental is plotted in the tune diagram \ogui{OPAtune}.
+
+\evcod{More}{butMoreClick} continues tracking with the same number of turns and updates the spectra with the new points.
+
+\evcod{Clear}{butClearClick} clears the plot areas by initializing again and also clears the tune diagram.
+
+\evcod{Beam}{butBeamClick} sets panel \guico{PanBeam} visible (and hides \guico{PanTush}, or vice versa) to enter beam parameters for a particle ensemble centered at the initial coordinates.
+
+\evcod{Exit}{butExitClick} saves the user settings and closes the GUI.\\[1ex]
+
+
+\underline{Other actions}
+
+\evcodx{resize}{FormResize} calls \guico{ResizeAll} to dynamically resize the complete GUI and initialize the plot areas again.
+
+
+
+
+
+\oguih{Dynamic aperture}{OPAtrackDA} 
+
+Dynamic aperture tracking: particles are started on a grid covering the area $(x,y)$, $(x,\delta)$ or $(y,\delta)$. The grid is successively refined to get an early impression \code{>gridSetup}. Physical apertures are calculate by projecting all apertures to the trackpoint \code{>Silhouette}. The other procedures are for event handling and plotting.\\
+
+\uses{\ouni{tracklib}, \ouni{OPAglobal} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+
+
+\oguih{Touschek lifetime}{OPAtrackT} 
+
+Touschek tracking: Lifetime is calculated as described in Appendix \ref{apptous} from bunch volume and momentum acceptance (MA). The MA is the minimum of the linear MA given by the beam pipe apertures \code{>CalcMALin}, of the RF-MA which is derived from input parameters or has been calculated previously by {\tt Bucket}, and of the dynamic MA obtained from tracking and binary search for min./max. stable momentum offset \code{>MADyn, Trackdbins, TrackLat}.
+
+The bunch volume is calculated from the periodic optics solution with its emittance and energy spread \code{>CalcSigma}.
+
+The GUI has two panels for several input values affecting lifetime and for derived values \code{>Output}.
+
+Coulomb lifetime is calculated from the effective acceptance, hower this includes only the physical, not the dynamic aperture limits \code{>CalcAccEL}. Bremsstrahlung lifetime uses the negative MA as used for Touschek lifetime too. Total lifetime is given as the inverse of the sum of the loss rates \code{>CalcLifetime}.\\
+
+
+
+\uses{\ouni{tracklib}, \ouni{opticplot}, \ouni{OPAglobal} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+
+
+\ounih{Calculations}{tracklib}
+
+At start, all linear elements are concatenated to matrices alternating with non-linear (or time dependent) kicks in order to speed up tracking \code{>TrackinMatrix}. Physical acceptances are calculated either from element apertures or from given apertures to estimate the maximum range for tracking \code{>Acceptances}. Both calculations have to be re-done when changing the reference momentum \code{>Init\_dpp}.
+The available aperture in the $(x,y)$-plane is calculated for a set of rays to obtain the silhouette, i.e. projection of beam pipe apertures to the trackpoint as described in Appendix \ref{appgeoa} \code{>AmpKappa}. Optics parameters at the Trackpoint are calculated, which may be located anywhere, even inside an element \code{>TrackPoint}.
+
+Tracking proceeds turn by turn at fixed momentum \code{>OneTurn} (or with changing momentum based on a simple model of synchtron oscillation \code{>OneTurn\_S}). Tracking one turn proceeds by repeated application of the matrix for a series of linear elements, followed by a non-linear (or time dependent) kick and a check for particle loss \code{>TMatKick}.
+
+The procedures in the last third of the unit (from {\tt SineWindow} to the end) are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances.\\
+
+
+\uses{\ouni{opticplot}, \ouni{OPAElements}, \ouni{OPAglobal} \ouni{mathlib}}
+
+
 
 
 \section{\label{secspee}Special Element Editors}
@@ -1674,45 +1770,6 @@ During running, the seed index is shown, and in the OPA log window in the main G
 \opamodule{LGBeditor.pas/.lfm}{(19.1k)}{OPAglobal,  MathLib, ASfigure, ASaux}
 \opamodule{LGBeditorLib.pas}{(13.9k)}{OPAglobal, ASfigure, ASaux}
 These two procedures optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. The first procedure is mainly the GUI and the minimizer, the second one contains physics and plotting.
-
-
-\section{\label{sectrac}Tracking}
-
-\oguih{Phase space}{OPAtrackP} 
-
-\oguih{Dynamic aperture}{OPAtrackDA} 
-
-\oguih{Touschek lifetime}{OPAtrackT} 
-
-\ounih{Calculations}{tracklib}
-
-
-Tracking is performed in unit {\tt TrackLib}, used by the three GUIs for phase space, dynamic aperture and Touschek tracking:
-
-\opamodule{OPAtrackP.pas/.lfm}{(44.8k)}{OPAglobal,  OPAtune, TrackLib, MathLib, Vgraph, ASfigure, ASaux.}
-Phase space tracking: the GUI contains four plot windows for the transverse phase spaces and Fourier spectra, and several panels for different options. Single particles are started from coordinates entered manually in edit fields or passed from {\tt ASfigure} mouse events \code{>ButRunClick}. For amplitude dependent tune shifts (ADTS) particle start coordinates are stepped up to aperture limits \code{>ButTushClick}. For simulation of injection, a beam ellipse populated with many particles can be tracked \code{>StartEnsemble, ButBeamRunClick, TrackBeam}. Most of the unit contains event handlers and plot routines.\\
-
-\opamodule{OPAtrackDA.pas/.lfm}{(30.9k)}{OPAglobal,  OPAtune, TrackLib, MathLib, Vgraph, ASfigure, ASaux.}
-Dynamic aperture tracking: particles are started on a grid covering the area $(x,y)$, $(x,\delta)$ or $(y,\delta)$. The grid is successively refined to get an early impression \code{>gridSetup}. Physical apertures are calculate by projecting all apertures to the trackpoint \code{>Silhouette}. The other procedures are for event handling and plotting.\\
-
-\opamodule{OPAtrackT.pas/.lfm}{(45.7k)}{OPAglobal,  OPAtune, TrackLib, OpticPlot, MathLib, Vgraph, ASfigure,ASaux.}
-Touschek tracking: Lifetime is calculated as described in Appendix \ref{apptous} from bunch volume and momentum acceptance (MA). The MA is the minimum of the linear MA given by the beam pipe apertures \code{>CalcMALin}, of the RF-MA which is derived from input parameters or has been calculated previously by {\tt Bucket}, and of the dynamic MA obtained from tracking and binary search for min./max. stable momentum offset \code{>MADyn, Trackdbins, TrackLat}.
-
-The bunch volume is calculated from the periodic optics solution with its emittance and energy spread \code{>CalcSigma}.
-
-The GUI has two panels for several input values affecting lifetime and for derived values \code{>Output}.
-
-Coulomb lifetime is calculated from the effective acceptance, hower this includes only the physical, not the dynamic aperture limits \code{>CalcAccEL}. Bremsstrahlung lifetime uses the negative MA as used for Touschek lifetime too. Total lifetime is given as the inverse of the sum of the loss rates \code{>CalcLifetime}.\\
-
-\opamodule{TrackLib.pas}{(46.2k)}{OPAglobal, OpticPlot, OPAElements, MathLib;}
-At start, all linear elements are concatenated to matrices alternating with non-linear (or time dependent) kicks in order to speed up tracking \code{>TrackinMatrix}. Physical acceptances are calculated either from element apertures or from given apertures to estimate the maximum range for tracking \code{>Acceptances}. Both calculations have to be re-done when changing the reference momentum \code{>Init\_dpp}.
-The available aperture in the $(x,y)$-plane is calculated for a set of rays to obtain the silhouette, i.e. projection of beam pipe apertures to the trackpoint as described in Appendix \ref{appgeoa} \code{>AmpKappa}. Optics parameters at the Trackpoint are calculated, which may be located anywhere, even inside an element \code{>TrackPoint}.
-
-Tracking proceeds turn by turn at fixed momentum \code{>OneTurn} (or with changing momentum based on a simple model of synchtron oscillation \code{>OneTurn\_S}). Tracking one turn proceeds by repeated application of the matrix for a series of linear elements, followed by a non-linear (or time dependent) kick and a check for particle loss \code{>TMatKick}.
-
-The procedures in the last third of the unit (from {\tt SineWindow} to the end) are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances.\\
-
-
 
 
 \section{\label{secelse}Layout, Currents etc}

@@ -73,30 +73,11 @@
 
 \newcommand{\biburl}[1]{{\small{\tt #1}}}
 
-\newenvironment{mylist}
-  {\begin{list}{$\bullet$}{\parsep 0pt}}
-  {\end{list}}
-\newenvironment{mysublist}
-  {\begin{list}{$-$}{\parsep 0pt \topsep 0pt \leftmargin 2cm}}
-  {\end{list}}
-\newcommand{\degree}{\mbox{$^{\circ}$}}
-\newcommand{\see}{\mbox{$\rightarrow$}}
-\newcommand\beq{\begin{equation}}
-\newcommand\eeq{\end{equation}}
-\newcommand{\uvec}[1]{\mbox{$\hat{\vec{#1}}$}}
-\newcommand{\cvec}[1]{\mbox{$\underline{\vec{#1}}$}}
-\newcommand{\csca}[1]{\mbox{$\underline{#1}$}}
-\newcommand{\Tr}{{\rm Tr}}
-\newcommand{\sign}{{\rm sign}}
-\newcommand\pt{\partial}
-\newcommand{\tilvec}[1]{\vec{\tilde{#1}}}
-
-
-
 
 \newcommand\opamodule[3]{{\bf \tt #1} #2\\  \rule[3pt]{\textwidth}{0.2pt} \\ {\scriptsize uses \tt  #3}\\[1ex]}
 \newcommand\opamoduleN[2]{{\bf \tt #1} #2\\  \rule[3pt]{\textwidth}{0.2pt} \\}
 
+\newcommand{\see}{\mbox{$\rightarrow$}}
 
 
 \begin{document}\noindent
@@ -168,7 +149,7 @@ Sec & Name & class & Purpose & Size \\ \hline
 \tabouni{globlib} & & global variables and procedures & 2986 \\
 \tabogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
 \tabouni{mathlib} & & mathematical library & 2075 \\
-\taboguif{../com/Vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
+\taboguif{../com/vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
 \taboguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
 \tabouni{../com/conrect} & & contour plot calculation & 332 \\
 \tabouni{../com/asaux} & & little helpers & 349 \\
@@ -439,10 +420,10 @@ Most procedures are elementary operations on vectors, matrices and complex numbe
 \unico{Powell} is an implementation of Powell's minimizer for steepest gradient search in $N$ dimensions taken from \cite{numrec}. It is used for sextupole optimization in \ogui{opachroma}, for longitudinal gradient optimization in \ogui{opalgbedit}, and (test mode only) for non-linear optimization in \ogui{opamomentum}.
 }
 
-\oguifh{Graphics library}{../com/Vgraph}
+\oguifh{Graphics library}{../com/vgraph}
 
 \desc{
-Class \guifco{Vplot} based on \code{TObject} contains a Lazarus \code{TCanvas} object. Plot commands for \code{TCanvas}  use integer screen pixel coordinates. \oguif{../com/Vgraph} wraps these standard plotting commands with procedures of same name but accepting physics coordinates as real numbers. Data are either scaled and forwarded to \code{TCanvas}  or written to an Ecapsulated postscript file \code{*.eps}.
+Class \guifco{Vplot} based on \code{TObject} contains a Lazarus \code{TCanvas} object. Plot commands for \code{TCanvas}  use integer screen pixel coordinates. \oguif{../com/vgraph} wraps these standard plotting commands with procedures of same name but accepting physics coordinates as real numbers. Data are either scaled and forwarded to \code{TCanvas}  or written to an Ecapsulated postscript file \code{*.eps}.
 
 Furthermore procedures for crating nice axes, for drawing circles and ellipses and for grabbing the screen image have been added.
 }
@@ -488,7 +469,7 @@ All the other procedures are mainly wrappers for the standard plot commands or s
 
 \begin{figure}\centering
 \includegraphics[scale=0.8]{vplotcoor.png}
-\caption{\label{vprange}\oguif{../com/Vgraph} coordinates}
+\caption{\label{vprange}\oguif{../com/vgraph} coordinates}
 \end{figure}
 
 
@@ -497,10 +478,10 @@ All the other procedures are mainly wrappers for the standard plot commands or s
 This frame contains a paintbox (i.e. a plot area) to be embedded in a GUI and a \guifco{Vplot} object using the paintbox canvas. 
 Added functionality includes handles to edit fields in order to translate mouse actions to numbers. 
 
-\uses{\oguif{../com/Vgraph}, \ouni{../com/asaux}}
+\uses{\oguif{../com/vgraph}, \ouni{../com/asaux}}
 
 \pvar{
-\guifco{plot} is a variable of class \guifco{Vplot} in \oguif{../com/Vgraph}. It is accessible to the parent GUI for direct plotting.
+\guifco{plot} is a variable of class \guifco{Vplot} in \oguif{../com/vgraph}. It is accessible to the parent GUI for direct plotting.
 
 }
 
@@ -508,9 +489,9 @@ Added functionality includes handles to edit fields in order to translate mouse 
 
 \guifco{assignScreen} creates \guifco{Vplot} and passes the paintbox canvas in order to plot on the screen.
 
-\guifco{forceMargin*} set fixed margins for the plot and supresses auto-scaling by subsequent calls to \guifco{Init} or \gfcod{Vgraph}{Axis}.
+\guifco{forceMargin*} set fixed margins for the plot and supresses auto-scaling by subsequent calls to \guifco{Init} or \gfcod{vgraph}{Axis}.
 
-\guifco{Init} starts the plot. Inputs are the horizontal and vertical ranges, flags where to put axes and the descriptions of the axes, a flag to mark the origin and another flag to adjust the aspect ratio (i.e. increasing the smaller of the two ranges until the units are of same size, see \gfcod{Vgraph}{AdjustAspectRatio}).
+\guifco{Init} starts the plot. Inputs are the horizontal and vertical ranges, flags where to put axes and the descriptions of the axes, a flag to mark the origin and another flag to adjust the aspect ratio (i.e. increasing the smaller of the two ranges until the units are of same size, see \gfcod{vgraph}{AdjustAspectRatio}).
 
 \guifco{SetSize} to be called from the parent GUI on resizing is used to change the size of this frame.
 
@@ -753,10 +734,10 @@ the new segment sequence is saved as linked list of abstract elements by \prcod{
 
 \desc{This is the main GUI for linear optics development. It contains a plot window to show optical functions along the lattice, a table to display beam parameter results, a couple of knobs to be assigned to elements and several buttons for various options and for changing the display. Unlike all other GUIs, the plot window here is not based on \oguif{../com/asfigure}, because it is too complex. All the beam dynamics calculations are done by \ouni{linoplib}.}
 
-\uses{\oguif{knobframe}, \ogui{ostartmenu}, \ogui{otunematrix}, \ogui{owriteomrk},\ogui{obetenvmag}, \ogui{omatching}, \ouni{linoplib}, \ogui{opatunediag}, \ogui{oeleedit}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}} 
+\uses{\oguif{knobframe}, \ogui{ostartmenu}, \ogui{otunematrix}, \ogui{owriteomrk},\ogui{obetenvmag}, \ogui{omatching}, \ouni{linoplib}, \ogui{opatunediag}, \ogui{oeleedit}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}} 
 
 \ppro{
-\guico{Init} is called from \ogui{opamenu} passing a handle to a tune diagram as defined in \ogui{opatunediag}, which is further passed to \ouni{linoplib}. A \guifco{Vplot} object as defined in \oguif{../com/Vgraph} is created, the corresponding variable for the plot window named \unico{vp}, however, is defined in \ouni{linoplib}, where the calculations take place. A handle to the parameter table \guico{tab} is also passed to \ouni{linoplib}. Then some inital values are set for various data.\\
+\guico{Init} is called from \ogui{opamenu} passing a handle to a tune diagram as defined in \ogui{opatunediag}, which is further passed to \ouni{linoplib}. A \guifco{Vplot} object as defined in \oguif{../com/vgraph} is created, the corresponding variable for the plot window named \unico{vp}, however, is defined in \ouni{linoplib}, where the calculations take place. A handle to the parameter table \guico{tab} is also passed to \ouni{linoplib}. Then some inital values are set for various data.\\
 If the lattice contains variables, copies of their values are saved, and all elements containing expressions are evaluated to check if the variables are used or not in the lattice. For each variable in use, a label is created underneath the plot window. If it is a primary variable (i.e. a number), which can be edited, the label is yellow, if it is a dependant variable (i.e. an expression) the label is pale yellow.\\
 Finally the GUI is resized based on saved user settings. This causes a repaint event of the plot area:
 }
@@ -795,7 +776,7 @@ If the right mouse button is pressed, the optical function values at this locati
 \evcod{-\textgreater txt}{butdataClick} writes four text files to the working folder, which are named \code{(opa file name)\_data, \_beta, \_mag, \_rad.txt}. They contain the equilibrium beam parameters, the beta functions along the lattice, the magnet field data and another output of beta functions for radiation calculations. 
 
 \evcod{-\textgreater EPS}{butepsClick} exports the plot to an encapsulated postscript file in the workig folder, which is named \code{(opa file name)\_betas, \_envel, \_magfd.eps} depending if betas, envelopes or magnetic fields are shown. 
-The procedure \guifco{PS\_start} and \guifco{PS\_stop} are called to switch on and off the postscript mode in \oguif{../com/Vgraph}.
+The procedure \guifco{PS\_start} and \guifco{PS\_stop} are called to switch on and off the postscript mode in \oguif{../com/vgraph}.
 
 \evcod{Exit}{butexitClick} calls \prcod{globlib}{EllaSave} to check for changes of element parameters and to ask the user to save the changes. Then user settings are saved and the GUI is closed.
 
@@ -941,12 +922,12 @@ Plot routines show beta functions and dispersions, or orbit, envelopes and apert
 
 
 \uses{
- \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+ \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
 
 \pvar{
 Several variables used by \ogui{opalinop}, \ogui{ostartmenu} etc. are defined in the interface section, i.e. as public, for convenience (i.e. lazyness). Most of them are flags to control the flow. Few of them may require an explanation:
 
-\unico{vp} defines a \guifco{Vgraph} object for the optics GUI \ogui{opalinop}, which creates it at start. Later, \ogui{linoplib} itself will plot to \unico{vp}. The orbit/injection GUI \ogui{opaorbit}, however, defines its own plot areas of class \guifco{asfigure} and only gets the data from \ouni{linoplib}. The reason for this different solutions was partly historical, partly due to the higher complexity of the \ogui{opalinop} plot.
+\unico{vp} defines a \guifco{vgraph} object for the optics GUI \ogui{opalinop}, which creates it at start. Later, \ogui{linoplib} itself will plot to \unico{vp}. The orbit/injection GUI \ogui{opaorbit}, however, defines its own plot areas of class \guifco{asfigure} and only gets the data from \ouni{linoplib}. The reason for this different solutions was partly historical, partly due to the higher complexity of the \ogui{opalinop} plot.
 
 \unico{Opval} is a dynamic 2-dimensional array of \code{OpvalType} to save optics parameters after each lattice element and for up to three calculations, e.g. for on- and $\pm$off-momentum.
 
@@ -1489,7 +1470,7 @@ The event handlers are trivial: The target and weight edit fields react to manua
 \desc{This unit is the base for all other units and GUIs of this section. It contains constants, type declarations and variables, and all the physics procedures.}
 
 \uses{
-\ouni{linoplib}, \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/Vgraph}, \ouni{../com/asaux}
+\ouni{linoplib}, \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}
 }
 
 
@@ -1669,7 +1650,7 @@ During running, the seed index is shown, and in the OPA log window in the main G
 There are three GUIs for phase space tracking, dynamic aperture and Touschek lifetime, and a physics unit used by all three. 
 
 \oguih{Phase space}{opatrackps} 
-\uses{\ouni{tracklib}, \ouni{globlib}, \ogui{opatunediag}, \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{tracklib}, \ouni{globlib}, \ogui{opatunediag}, \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
 
 \desc{
 The GUI for phase space tracking contains four plot windows for the transverse phase spaces (\guico{psx}, \guico{psy}) and for the particle spectra (\guico{ftx}, \guico{fty}), and six panels to set parameters or show results. Single particles are started from coordinates entered manually in edit fields or passed from mouse clicks in the phase space plots.  Amplitude dependent tune shifts (ADTS) are obtained by stepping up particle coordinates. For simulation of injection, a beam ellipse populated with many particles can be tracked. 
@@ -1751,11 +1732,60 @@ When the scan is done, the tune as function of amplitudes is plotted for the thr
 \desc{There are four modes of dynamic aperture tracking, three 2-dimensional scans for the areas $(\pm x,y)$, $(\pm x,\pm\Delta p/p)$ and $(y,\pm\Delta p/p)$, and one 3-dimensional scan for the volume $(\pm x, \pm x', \pm \Delta p/p)$. They may be combined with three scan methods, grid probing (GP), binary search (BS) and flood fill (FF), however FF is not available for the 2-d $\Delta p/p$ scans, whereas the 3-d scan works only with FF. GP probes every point in a rectangular grid which is successively refined to get an early impression. BS  search finds separatrix points along a set of rays from the origin. And FF from computer graphics fills the unstable area outside the separatrix.
 FF was implemented in OPA by Bernard Riemann.
 
-The FF 3-d scan provides data for "Fast Touschek Tracking" in \ogui{opatracktt}. A detailed description is given in \cite{FTTpaper}.}
+The FF 3-d scan provides data for "Fast Touschek Tracking" in \ogui{opatracktt}. A detailed description is given in \cite{FTTpaper}.
+
+The GUI contains a plot window \guico{fig}, two radio button groups \guico{rgmode} and \guico{rgmeth} to set mode and method, two panels \guico{PanNray} and \guico{pangrid} to set parameters for BS and GP/FF modes, and edit fiels for turns and momentum offset.
+}
+
+\uses{\ouni{tracklib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
 
 
-\uses{\ouni{tracklib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+\ppro{
+\guico{Start} reads user settings and fills the GUI with these values. The corresponding components are shown or hidden, and incompatible settings are corrected.
+\prcod{tracklib}{Acc\_dpp} and \prcod{tracklib}{Initdpp} are called, which provide the momentum dependant physical acceptance and the periodic solution for the given $\Delta p/p$ ($=0$ at start, has to exist, otherwise launching the GUI would be blocked in \ogui{opamenu}).  
+}
 
+\act{}
+
+\evcodx{\bf mode/method radio groups}{rbClick} reacts to setting the mode or the method. Mode and method are encoded in the \code{Tag} fields of the components. Incompatible combinations of mode and method are corrected. Labels and edit field captions are set depending on mode/method calling private procedure \guico{rbsetfields}. Then the grids for probing are updated calling \guico{UpdateGridParams}: the grid dimension are numbers like $2^N+1$ in order to successively refine the grid during execution. Finally \guico{UpdateApertures} is called to calculate the available apertures to be used for testing on particle loss. Depending on if the \ofld{Element apertures} field is checked or not, these are either defined by the element apertures or by values set in the \ofld{Ax,Ay} fields. Depending on the selected mode, \guico{UpdateApertures} calls  \prcod{tracklib}{Acc\_dpp} to calculate the momentum dependent horizontal and vertical apertures,  or \prcod{tracklib}{Initdpp} and \guico{Silhouette} to calculate the transverse aperture for the set momentum offset as it appears at the trackpoint (in linear transformation). Finally \guico{MakePlot} plots the yet empty apertures.
+
+\evcod{dpp offset/range}{eddppaction} performs the same steps to calculate the transverse aperture at the set momentum offset or the momentum dependent apertures, depending on the mode. If the periodic solution is not found for the given momentum offset, an error message is launched and the offset is set to zero.
+
+\evcod{Nturs}{edturns(KeyPress,Exit)} takes the given number of turns.
+
+\todo{\evcod{TrackPoint}{esposaction} should set the track point anywhere but was never implemented because it was not needed yet. However, this option is used in \ogui{opatrackps} and \ogui{opatracktt}, so it could be implemented here too.}\\[1ex]
+
+In BS mode panel \guico{PanNRay} is visible: 
+
+\evcod{Number of rays}{butnrclick} reacts to the \ofld{$+-$} buttons to step up or down the number of rays for binary search calling \guico{UpdateGridParams} and shows it in label \guico{labnr}.
+
+\evcod{Resolution}{edreso(KEyPress,Exit)} just reads the required resolution when to stop the binary search. \\[1ex]
+
+In GP and FF mode panel \guico{PanGrid} is visible:
+
+\evcod{Cells...}{bugNgClick} reacts to the \ofld{$+-$} buttons to step up or down the number of grid points calling \guico{UpdateGridParams} and shows it in the labels. The meaning of the two lines in the panel depends on the selected mode; captions are set when clicking the mode/method radio buttons. In case of the 3-d mode is checked, if the number of momentum slices agrees with the number of points used for calculating the momentum dependent physical apertures, and if this is not the case, the latter is recalculated again, because both tracked and physical apertures at same momentum values are required if results are to be used later in \ogui{opatracktt}.
+
+\evcod{Element Apertures}{cbxAperClick} switches between using element apertures or set apertures as given in the \guico{eda(x,y)} fields to calculate the physical acceptance calling \guico{UpdateApertures}.
+
+\evcod{Ax,Ay}{eda(x,y)(KeyPress,Exit)} read the apertures, which are assumed to be at all elements, and calculates the physical acceptance based on these values.
+
+\evcod{plot style}{butplotStyleClick} toggles between a simple and a nicer plot style for the DA result.
+
+\evcod{Start}{butStartClick} starts tracking by calling procedure \guico{DATracking}: it first changes the button caption to \ofld{Stop} and its \code{Tag} to 1, so pressing the button again will abort tracking. Then, depending on the method, either the rays for BS method or the grid for GP and FF method are set up calling \guico{DARaySetup} or \guico{DAGridSetup}. Depending on the mode the koordinates (variables \guico{ko...}) to be plotted are assigned ($1,2,3,5$ corresponding to $x,x',y,\Delta p/p$).  Different tracking procedures are used depending on mode and method. They all make use of \unico{DASingleTracking}, which also marks the particles by green or red symbols in the plot if they survived or not.
+
+\guico{DATrackingClassicGrid} for GP method adresses the grid cells as stored in array \guico{dagord}, which was established by \guico{DAGridSetup}. \feature{The idea behind is too start with a coarse probing and refine it iteratively in order to quickly get an impression if DA is good or bad.} 
+
+\guico{DATrackingBinRays} for BS method performs a binary search along the rays established by \guico{DARaySetup} by increasing or decreasing the relative coordinate along the ray depending on survival or loss, where in case of loss the decrement is halved until it becomes smaller than the given resolution. 
+
+\guico{DATrackingFillToolGrid} for the FF method is an implementation of the flood fill algorithm from computer graphics, written by Bernard Riemann~\cite{FTTpaper}: it finds the separatrix between stable and unstable regions by checking if adjacent pixels have different results for loss and survival. Inside the stable areas no further testing is done, inside the unstable areas all particles are tested, which is fast, because they usually get lost quickly. Particles results are saved in an array \guico{queue} of class \guico{TIndexQueue} which contains its own methods for management.
+
+The 3-d FF scan for momentum dependent separatrix in horizontal phase space requires pre- and postprocessing: arrays and variables named \unico{Flo...} defined in \ouni{tracklib} contain parameters of the separatrix polygons for the momentum slices. Procedure \guico{FloPinit} sets them up before tracking, and procedure \guico{FloPoly}, called after tracking each slice, finds a polygon approximating the separatrix, i.e. the boundary between stable and unstable pixels, centered at the closed orbit. These polygons are overplotted to the grid for each slice. After termination all polygons are shown together with color changing from blue to red indicating the momentum. The polygon data are saved and may be re-used for Fast Touschek Tracking by \ogui{opatracktt}.
+
+The \guico{MakePlot} procedure shows a variety of DA-plots depending on mode, method and status. The code may be understandable without further comment. The only complication it the flag \guico{MonitorXXP} introduced to show results during 3-d scan in a different way than after termination. 
+
+\evcod{$--\!\!>$ EPS}{butExportClick} exports the current plot as \code{.eps} file.
+
+\evcod{Exit}{Exit} saves the user settings and closes the GUI.
 
 
 
@@ -1773,7 +1803,7 @@ Coulomb lifetime is calculated from the effective acceptance, hower this include
 
 
 
-\uses{\ouni{tracklib}, \ouni{linoplib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/Vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{tracklib}, \ouni{linoplib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
 
 
 \ounih{Calculations}{tracklib}

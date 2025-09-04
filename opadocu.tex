@@ -96,7 +96,7 @@ When reading this document, the source code may be examined in parallel, prefera
 
 In this document following styles are used:\\
 Pieces of code are shown in \code{typewriter style}.
-\opagui{GUI} is a graphical user interface, usually based on class \code{TForm}. \opaguif{Frame} if a user-defined GUI-component, usually based on class \code{TFrame}.  \opauni{Unit} is a standard Pascal unit. 
+\opagui{GUI} is a graphical user interface, usually based on class \code{TForm}. \opaguif{Frame} if a user-defined GUI-component, usually based on class \code{TFrame}.  \opauni{Unit} is a standard Pascal unit.  
 
 A GUI or a frame has a list of \guico{actions} corresponding to the event handlers of its components, for example a button to be pressed. The pure Pascal units are passive, they contain a set of public \unico{procedures} which are called from the GUIs. Frames too may contain public \guifco{procedures}. Thus in this documentation, action lists are given for the GUIs and frames, and lists of public procedures for the frames and units. All modules may offer public variables, here coloured \guico{x}, \guifco{y}, \unico{z} for GUIs, frames, units.
 
@@ -115,11 +115,10 @@ Questions may be adressed to the author at \url{mailto:psi@andreas-streun.de}.
 Following semantic versioning \cite{semver} version 4.063 of OPA was renamed 4.1.0. However, since up to now only the author worked on the code, the distinctions MAJOR, MINOR, PATCH rather refer to the changes as visible to the users than to the API. 
 
 
-Current version is OPA 4.2.0. It includes 44 Pascal units \code{.pas}, 28 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 16 of them are Pascal \opauni{units}. Five of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
-Table~\ref{tabover} lists the units. The column "Size" lists the lines of code as a rough estimate for the complexity of the unit. Furthermore, OPA includes a couple of image files \code{.ico, .bmp} to draw symbols on buttons. 
+Current version is OPA 4.2.1. It includes 44 Pascal units \code{.pas}, 29 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 15 of them are Pascal \opauni{units}. Four of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
+Table~\ref{tabover} lists the units. The column "Size" lists the lines of code as a rough estimate for the complexity of the unit. Furthermore, OPA includes the main program file \ouni{opa.lpr} and a couple of image files \code{.ico, .bmp} to draw symbols on buttons. 
 
-
-A GUI defines a class, given in table~\ref{tabover} in the column "class". The actual GUI is the one and only instance of this class, i.e. a public variable, usually with the name as the class but without the leading "T". A frame also defines a class but no instance, instead the parent GUI will define one or more instances of this class as variables.
+A GUI defines a class, given in table~\ref{tabover} in the column "class". The actual GUI is the one and only instance of this class, i.e. a public variable, usually with the name as the class but without the leading "T". A frame also defines a class but no instance, instead the parent GUI will define one or more instances of this class as variables. A standard Pascal unit may also define a class to be instantiated, or it is a library, i.e. a collection of variables and public procedures.
 
 In general GUIs should handle the user interactions only while the Pascal units do all the calculations. This separation was largely realized in OPA, however not strictly. Some minor calculations are done in the GUI in some places.
 
@@ -149,7 +148,7 @@ Sec & Name & class & Purpose & Size \\ \hline
 \tabouni{globlib} & & global variables and procedures & 2986 \\
 \tabogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
 \tabouni{mathlib} & & mathematical library & 2075 \\
-\taboguif{../com/vgraph} & \guifco{Vplot} & real number graphics library & 1276 \\
+\tabouni{../com/vgraph} & \unico{Vplot} & real number graphics library & 1276 \\
 \taboguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
 \tabouni{../com/conrect} & & contour plot calculation & 332 \\
 \tabouni{../com/asaux} & & little helpers & 349 \\
@@ -175,7 +174,7 @@ Sec & Name & class & Purpose & Size \\ \hline
 \hline
 \tabogui{opamomentum} & \guico{Tmomentum} & momentum dependence and optimization & 949 \\
 \tabouni{momentumlib} &  & momentum dependent calculations & 480 \\
-\tabogui{opabucket} & \guico{TopabucketView} & plot RF bucket & 640 \\
+\tabogui{opabucket} & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
 \tabogui{opachroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
 \taboguif{csexframe} & \guico{TCSex} & controller for nonlinear element & 454 \\
@@ -420,10 +419,10 @@ Most procedures are elementary operations on vectors, matrices and complex numbe
 \unico{Powell} is an implementation of Powell's minimizer for steepest gradient search in $N$ dimensions taken from \cite{numrec}. It is used for sextupole optimization in \ogui{opachroma}, for longitudinal gradient optimization in \ogui{opalgbedit}, and (test mode only) for non-linear optimization in \ogui{opamomentum}.
 }
 
-\oguifh{Graphics library}{../com/vgraph}
+\ounih{Graphics library}{../com/vgraph}
 
 \desc{
-Class \guifco{Vplot} based on \code{TObject} contains a Lazarus \code{TCanvas} object. Plot commands for \code{TCanvas}  use integer screen pixel coordinates. \oguif{../com/vgraph} wraps these standard plotting commands with procedures of same name but accepting physics coordinates as real numbers. Data are either scaled and forwarded to \code{TCanvas}  or written to an Ecapsulated postscript file \code{*.eps}.
+Class \unico{Vplot} based on \code{TObject} contains a Lazarus \code{TCanvas} object. Plot commands for \code{TCanvas}  use integer screen pixel coordinates. \ouni{../com/vgraph} wraps these standard plotting commands with procedures of same name but accepting physics coordinates as real numbers. Data are either scaled and forwarded to \code{TCanvas}  or written to an Ecapsulated postscript file \code{*.eps}.
 
 Furthermore procedures for crating nice axes, for drawing circles and ellipses and for grabbing the screen image have been added.
 }
@@ -431,37 +430,37 @@ Furthermore procedures for crating nice axes, for drawing circles and ellipses a
 \uses{none}
 
 \pvar{
-There are no public variables. A GUI will define one or more variables of class \guifco{Vplot}
+There are no public variables. A GUI will define one or more variables of class \unico{Vplot}
 }
 
 \ppro{
-\guifco{Create} accepts a handle to a \code{TCanvas} object, which is needed to construct a \guifco{Vplot} object. Further some initialization is done.
+\unico{Create} accepts a handle to a \code{TCanvas} object, which is needed to construct a \unico{Vplot} object. Further some initialization is done.
 
-\guifco{PS\_start} opens an \code{*.eps} file of name \guifco{psfile} supplied by the calling procedure for output and sets the private flag \guifco{PS} to \code{true} to direct the output to the file and not to the screen. A file header is written, defining the BoundingBox as the canvas screen size. Then macros for text alignment are defined in postscript language. If opening the file fails, an error message is returned.
+\unico{PS\_start} opens an \code{*.eps} file of name \unico{psfile} supplied by the calling procedure for output and sets the private flag \unico{PS} to \code{true} to direct the output to the file and not to the screen. A file header is written, defining the BoundingBox as the canvas screen size. Then macros for text alignment are defined in postscript language. If opening the file fails, an error message is returned.
 
-\guifco{PS\_stop} closes the \code{*.eps} file and sets the flag \guifco{PS} to \code{false}.
+\unico{PS\_stop} closes the \code{*.eps} file and sets the flag \unico{PS} to \code{false}.
 
-\guifco{SetRange*}, \guifco{SetMargin*} etc set plot ranges and scaling as displayed in Fig.\ref{vprange}. The vertical screen coordinate counts downwards whereas the physical coordinates as well as the Postscript coordinates count upwards. 
+\unico{SetRange*}, \unico{SetMargin*} etc set plot ranges and scaling as displayed in Fig.\ref{vprange}. The vertical screen coordinate counts downwards whereas the physical coordinates as well as the Postscript coordinates count upwards. 
 
-\guifco{getpx,getpy} and \guifco{PS\_getpxr,PS\_getpyr} translate physical coordinates $x,y$ into screen, resp. Postscript coordinates (upper/lower line):
+\unico{getpx,getpy} and \unico{PS\_getpxr,PS\_getpyr} translate physical coordinates $x,y$ into screen, resp. Postscript coordinates (upper/lower line):
 \[
 {\tt px}={\tt px0}+\frac{\tt pxrange}{x_{\rm range}} (x-x_{\rm min}) \qquad
 {\tt py}=\left\{ \begin{array}{r} {\tt py0} + \\ {\tt pytotal} - {\tt py0} -  \end{array} \right\} \frac{(-{\tt pyrange})}{y_{\rm range}} (y-y_{\rm min}) \qquad
 \]
 
-\guifco{AdjustAspectRatio} adjusts the plot ranges such, that the unit is the same horizontal and vertical, i.e. a circle appears as circle not as an ellipse.
+\unico{AdjustAspectRatio} adjusts the plot ranges such, that the unit is the same horizontal and vertical, i.e. a circle appears as circle not as an ellipse.
 
-\guifco{Axis} plots an axis with even numbers as annotations and ranges, also extracting an exponent if needed. 
+\unico{Axis} plots an axis with even numbers as annotations and ranges, also extracting an exponent if needed. 
 
-\guifco{GetAxisSpace} returns the space required for the axis annotations without drawing the axis in order to adjust the plot range accordingely. It is called first by the calling GUI, in particular by \oguif{../com/asfigure}.
+\unico{GetAxisSpace} returns the space required for the axis annotations without drawing the axis in order to adjust the plot range accordingely. It is called first by the calling GUI, in particular by \oguif{../com/asfigure}.
 
-\guifco{Circle} and \guifco{Ellipse} plot a circle or a (sheared) ellipse in beam dynamics notation.
+\unico{Circle} and \unico{Ellipse} plot a circle or a (sheared) ellipse in beam dynamics notation.
 
-\guifco{GrabImage} copies the screen canvas to the system clipboard, useful to catch plots for draft notes.
+\unico{GrabImage} copies the screen canvas to the system clipboard, useful to catch plots for draft notes.
 
 All the other procedures are mainly wrappers for the standard plot commands or shortcuts to draw arrows, symbols etc.
 
-\guifco{Stroke} does nothing on the screen but terminates a series of plot commands in Postscript. Curve plotting procedures need to terminate a \guifco{LineTo...} loop by calling \guifco{stroke}.
+\unico{Stroke} does nothing on the screen but terminates a series of plot commands in Postscript. Curve plotting procedures need to terminate a \unico{LineTo...} loop by calling \unico{stroke}.
 }
 
 \feature{Direct EPS export is a convenient function to immediately create high resolution graphics ready for publication in a \LaTeX document.}
@@ -469,29 +468,29 @@ All the other procedures are mainly wrappers for the standard plot commands or s
 
 \begin{figure}\centering
 \includegraphics[scale=0.8]{vplotcoor.png}
-\caption{\label{vprange}\oguif{../com/vgraph} coordinates}
+\caption{\label{vprange}\ouni{../com/vgraph} coordinates}
 \end{figure}
 
 
 
 \oguifh{Plot area}{../com/asfigure}
-This frame contains a paintbox (i.e. a plot area) to be embedded in a GUI and a \guifco{Vplot} object using the paintbox canvas. 
+This frame contains a paintbox (i.e. a plot area) to be embedded in a GUI and a \unico{Vplot} object using the paintbox canvas. 
 Added functionality includes handles to edit fields in order to translate mouse actions to numbers. 
 
-\uses{\oguif{../com/vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{../com/vgraph}, \ouni{../com/asaux}}
 
 \pvar{
-\guifco{plot} is a variable of class \guifco{Vplot} in \oguif{../com/vgraph}. It is accessible to the parent GUI for direct plotting.
+\guifco{plot} is a variable of class \unico{Vplot} in \ouni{../com/vgraph}. It is accessible to the parent GUI for direct plotting.
 
 }
 
 \ppro{
 
-\guifco{assignScreen} creates \guifco{Vplot} and passes the paintbox canvas in order to plot on the screen.
+\guifco{assignScreen} creates \unico{Vplot} and passes the paintbox canvas in order to plot on the screen.
 
-\guifco{forceMargin*} set fixed margins for the plot and supresses auto-scaling by subsequent calls to \guifco{Init} or \gfcod{vgraph}{Axis}.
+\guifco{forceMargin*} set fixed margins for the plot and supresses auto-scaling by subsequent calls to \guifco{Init} or \prcod{vgraph}{Axis}.
 
-\guifco{Init} starts the plot. Inputs are the horizontal and vertical ranges, flags where to put axes and the descriptions of the axes, a flag to mark the origin and another flag to adjust the aspect ratio (i.e. increasing the smaller of the two ranges until the units are of same size, see \gfcod{vgraph}{AdjustAspectRatio}).
+\guifco{Init} starts the plot. Inputs are the horizontal and vertical ranges, flags where to put axes and the descriptions of the axes, a flag to mark the origin and another flag to adjust the aspect ratio (i.e. increasing the smaller of the two ranges until the units are of same size, see \prcod{vgraph}{AdjustAspectRatio}).
 
 \guifco{SetSize} to be called from the parent GUI on resizing is used to change the size of this frame.
 
@@ -734,10 +733,10 @@ the new segment sequence is saved as linked list of abstract elements by \prcod{
 
 \desc{This is the main GUI for linear optics development. It contains a plot window to show optical functions along the lattice, a table to display beam parameter results, a couple of knobs to be assigned to elements and several buttons for various options and for changing the display. Unlike all other GUIs, the plot window here is not based on \oguif{../com/asfigure}, because it is too complex. All the beam dynamics calculations are done by \ouni{linoplib}.}
 
-\uses{\oguif{knobframe}, \ogui{ostartmenu}, \ogui{otunematrix}, \ogui{owriteomrk},\ogui{obetenvmag}, \ogui{omatching}, \ouni{linoplib}, \ogui{opatunediag}, \ogui{oeleedit}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}} 
+\uses{\oguif{knobframe}, \ogui{ostartmenu}, \ogui{otunematrix}, \ogui{owriteomrk},\ogui{obetenvmag}, \ogui{omatching}, \ouni{linoplib}, \ogui{opatunediag}, \ogui{oeleedit}, \ouni{globlib}, \ouni{mathlib}, \ouni{../com/vgraph}, \ouni{../com/asaux}} 
 
 \ppro{
-\guico{Init} is called from \ogui{opamenu} passing a handle to a tune diagram as defined in \ogui{opatunediag}, which is further passed to \ouni{linoplib}. A \guifco{Vplot} object as defined in \oguif{../com/vgraph} is created, the corresponding variable for the plot window named \unico{vp}, however, is defined in \ouni{linoplib}, where the calculations take place. A handle to the parameter table \guico{tab} is also passed to \ouni{linoplib}. Then some inital values are set for various data.\\
+\guico{Init} is called from \ogui{opamenu} passing a handle to a tune diagram as defined in \ogui{opatunediag}, which is further passed to \ouni{linoplib}. A \unico{Vplot} object as defined in \ouni{../com/vgraph} is created, the corresponding variable for the plot window named \unico{vp}, however, is defined in \ouni{linoplib}, where the calculations take place. A handle to the parameter table \guico{tab} is also passed to \ouni{linoplib}. Then some inital values are set for various data.\\
 If the lattice contains variables, copies of their values are saved, and all elements containing expressions are evaluated to check if the variables are used or not in the lattice. For each variable in use, a label is created underneath the plot window. If it is a primary variable (i.e. a number), which can be edited, the label is yellow, if it is a dependant variable (i.e. an expression) the label is pale yellow.\\
 Finally the GUI is resized based on saved user settings. This causes a repaint event of the plot area:
 }
@@ -776,7 +775,7 @@ If the right mouse button is pressed, the optical function values at this locati
 \evcod{-\textgreater txt}{butdataClick} writes four text files to the working folder, which are named \code{(opa file name)\_data, \_beta, \_mag, \_rad.txt}. They contain the equilibrium beam parameters, the beta functions along the lattice, the magnet field data and another output of beta functions for radiation calculations. 
 
 \evcod{-\textgreater EPS}{butepsClick} exports the plot to an encapsulated postscript file in the workig folder, which is named \code{(opa file name)\_betas, \_envel, \_magfd.eps} depending if betas, envelopes or magnetic fields are shown. 
-The procedure \guifco{PS\_start} and \guifco{PS\_stop} are called to switch on and off the postscript mode in \oguif{../com/vgraph}.
+The procedure \guifco{PS\_start} and \guifco{PS\_stop} are called to switch on and off the postscript mode in \ouni{../com/vgraph}.
 
 \evcod{Exit}{butexitClick} calls \prcod{globlib}{EllaSave} to check for changes of element parameters and to ask the user to save the changes. Then user settings are saved and the GUI is closed.
 
@@ -922,7 +921,7 @@ Plot routines show beta functions and dispersions, or orbit, envelopes and apert
 
 
 \uses{
- \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
+ \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \ouni{../com/vgraph}, \ouni{../com/asaux}}
 
 \pvar{
 Several variables used by \ogui{opalinop}, \ogui{ostartmenu} etc. are defined in the interface section, i.e. as public, for convenience (i.e. lazyness). Most of them are flags to control the flow. Few of them may require an explanation:
@@ -1470,7 +1469,7 @@ The event handlers are trivial: The target and weight edit fields react to manua
 \desc{This unit is the base for all other units and GUIs of this section. It contains constants, type declarations and variables, and all the physics procedures.}
 
 \uses{
-\ouni{linoplib}, \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/vgraph}, \ouni{../com/asaux}
+\ouni{linoplib}, \ouni{elemlib}, \ogui{opatunediag}, \ouni{globlib}, \ouni{mathlib}, \ouni{../com/vgraph}, \ouni{../com/asaux}
 }
 
 
@@ -1650,7 +1649,7 @@ During running, the seed index is shown, and in the OPA log window in the main G
 There are three GUIs for phase space tracking, dynamic aperture and Touschek lifetime, and a physics unit used by all three. 
 
 \oguih{Phase space}{opatrackps} 
-\uses{\ouni{tracklib}, \ouni{globlib}, \ogui{opatunediag}, \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{tracklib}, \ouni{globlib}, \ogui{opatunediag}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/vgraph}, \ouni{../com/asaux}}
 
 \desc{
 The GUI for phase space tracking contains four plot windows for the transverse phase spaces (\guico{psx}, \guico{psy}) and for the particle spectra (\guico{ftx}, \guico{fty}), and six panels to set parameters or show results. Single particles are started from coordinates entered manually in edit fields or passed from mouse clicks in the phase space plots.  Amplitude dependent tune shifts (ADTS) are obtained by stepping up particle coordinates. For simulation of injection, a beam ellipse populated with many particles can be tracked. 
@@ -1737,7 +1736,7 @@ The FF 3-d scan provides data for "Fast Touschek Tracking" in \ogui{opatracktt}.
 The GUI contains a plot window \guico{fig}, two radio button groups \guico{rgmode} and \guico{rgmeth} to set mode and method, two panels \guico{PanNray} and \guico{pangrid} to set parameters for BS and GP/FF modes, and edit fiels for turns and momentum offset.
 }
 
-\uses{\ouni{tracklib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{tracklib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/vgraph}, \ouni{../com/asaux}}
 
 
 \ppro{
@@ -1803,7 +1802,7 @@ Coulomb lifetime is calculated from the effective acceptance, hower this include
 
 
 
-\uses{\ouni{tracklib}, \ouni{linoplib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \oguif{../com/vgraph}, \ouni{../com/asaux}}
+\uses{\ouni{tracklib}, \ouni{linoplib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/vgraph}, \ouni{../com/asaux}}
 
 
 \ounih{Calculations}{tracklib}

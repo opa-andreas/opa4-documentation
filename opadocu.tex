@@ -19,8 +19,8 @@
 
 \newcommand\code[1]{{\tt #1}}
 
-\newcommand{\ofld}[1]{\colorbox{black!15}{{\bf #1}}}
-\newcommand{\ofldx}[1]{\colorbox{black!15}{(#1)}}
+\newcommand{\ofld}[1]{\colorbox{black!15}{{{\color{black}\bf #1}}}}
+\newcommand{\ofldx}[1]{\colorbox{black!15}{{\color{black}(#1)}}}
 
 \newcommand\guico[1]{{\color{blue}\code{#1}}}
 \newcommand\guifco[1]{{\color{violet}\code{#1}}}
@@ -124,7 +124,9 @@ In general GUIs should handle the user interactions only while the Pascal units 
 
 In version 4.2.0 all files were renamed following this convention for the file name: 
 \code{opa*} is a first level GUIs, i.e. one of the main design programs launched from the main menu. \code{*lib} is a plain Pascal units which contains a library of physics procedures. 
-\code{o*} is a second level GUI, which is launched by a first level GUIs, for example a start menu. \code{*frame} is a frame. Files in the \code{../com} folder were not renamed. \\
+\code{o*} is a second level GUI, which is launched by a first level GUIs, for example a start menu. \code{*frame} is a frame. Files in the \code{../com} folder were not renamed. 
+
+Figure~\ref{blockfig} shows a block diagram of the GUIs. \\
 
 Table~\ref{tabover} also serves as a {\bf table of contents} with the first column listing the section numbers:
 Section \ref{secglob} will explain the "backbone" of OPA, which are the global datatypes and variables, the main menu and units for mathematics and graphics which are used by many GUIs. 
@@ -143,63 +145,70 @@ The three tracking modules with their library are explained in section \ref{sect
 \caption{OPA units overview}
 \label{tabover}
 {\small
-\begin{tabular}{llllr}
-Sec & Name & class & Purpose & Size \\ \hline
-\tabouni{globlib} & & global variables and procedures & 2986 \\
-\tabogui{opamenu} & \guico{TMenuForm} & the main menu & 901 \\
-\tabouni{mathlib} & & mathematical library & 2075 \\
-\tabouni{../com/vgraph} & \unico{Vplot} & real number graphics library & 1276 \\
-\taboguif{../com/asfigure} & \guifco{TFigure} & general plot procedure & 314 \\
-\tabouni{../com/conrect} & & contour plot calculation & 332 \\
-\tabouni{../com/asaux} & & little helpers & 349 \\
+\begin{tabular}{llcllr}
+Sec & Name & SC & class & Purpose & Size \\ \hline
+\tabouni{globlib} & \unico{GL} & & global variables and procedures & 2986 \\
+\tabogui{opamenu} & &\guico{TMenuForm} & the main menu & 901 \\
+\tabouni{mathlib} & \unico{ML} & & mathematical library & 2075 \\
+\tabouni{../com/vgraph} & \unico{VG} & \unico{Vplot} & real number graphics library & 1276 \\
+\taboguif{../com/asfigure} & \guifco{AF} & \guifco{TFigure} & general plot procedure & 314 \\
+\tabouni{../com/conrect} & \unico{CO} & & contour plot calculation & 332 \\
+\tabouni{../com/asaux} & \unico{AX} & & little helpers & 349 \\
 \hline
-\tabouni{latfilelib} & & file reading and writing & 1839 \\
-\tabogui{opatexteditor} & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
-\tabogui{opaeditor} & \guico{TFormEdit} & interactive lattice editor  & 346 \\
-\tabogui{oelecreate} & \guico{TEditElemCreate} & creation of an element & 144 \\
-\tabogui{oeleedit} & \guico{TEditElemSet} & edit element parameters & 861 \\
-\tabogui{osegedit} & \guico{TEditSegSet} & edit segment parameters & 444 \\
+\tabouni{latfilelib} & \unico{LF} & & file reading and writing & 1839 \\
+\tabogui{opatexteditor} & & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
+\tabogui{opaeditor} & & \guico{TFormEdit} & interactive lattice editor  & 346 \\
+\tabogui{oelecreate} & & \guico{TEditElemCreate} & creation of an element & 144 \\
+\tabogui{oeleedit} & & \guico{TEditElemSet} & edit element parameters & 861 \\
+\tabogui{osegedit} & & \guico{TEditSegSet} & edit segment parameters & 444 \\
 \hline
-\tabogui{opalinop} & \guico{Toptic} & linear optics design & 1143 \\
-\taboguif{knobframe} & \guifco{TKnob} & slider to set element property & 421 \\
-\tabogui{ostartmenu} & \guico{Tstartsel} & setting for start parameters & 615 \\
-\tabogui{obetenvmag} & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
-\tabogui{otunematrix} & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
-\tabogui{owriteomrk} & \guico{TWOMK} & write optics markers & 125 \\
-\tabouni{linoplib} & & linear beam dynamics calculations & 2840 \\
-\tabouni{elemlib} & & element propagation calculations & 2387 \\
-\tabogui{omatching} & \guico{TMatch} & linear optics matching & 1457 \\
-\tabogui{omatchscan} & \guico{TsetMatchScan}& parameter scan & 119 \\
-\tabogui{opatunediag} & \guico{TTunePlot} & show the tune diagram & 634 \\
+\tabogui{opalinop} & & \guico{Toptic} & linear optics design & 1143 \\
+\taboguif{knobframe} & \guifco{KF} & \guifco{TKnob} & slider to set element property & 421 \\
+\tabogui{ostartmenu} & & \guico{Tstartsel} & setting for start parameters & 615 \\
+\tabogui{obetenvmag} & & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
+\tabogui{otunematrix} & & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
+\tabogui{owriteomrk} & & \guico{TWOMK} & write optics markers & 125 \\
+\tabouni{linoplib} & \unico{LO} & & linear beam dynamics calculations & 2840 \\
+\tabouni{elemlib} & \unico{EL} & & element propagation calculations & 2387 \\
+\tabogui{omatching} & & \guico{TMatch} & linear optics matching & 1457 \\
+\tabogui{omatchscan} & & \guico{TsetMatchScan}& parameter scan & 119 \\
+\tabogui{opatunediag} & & \guico{TTunePlot} & show the tune diagram & 634 \\
 \hline
-\tabogui{opamomentum} & \guico{Tmomentum} & momentum dependence and optimization & 949 \\
-\tabouni{momentumlib} &  & momentum dependent calculations & 480 \\
-\tabogui{opabucket} & \guico{TBucketView} & plot RF bucket & 640 \\
+\tabogui{opamomentum} & & \guico{Tmomentum} & momentum dependent optics & 949 \\
+\tabouni{momentumlib} & \unico{MO} & & momentum dependent calculations & 480 \\
+\tabogui{opabucket} & & \guico{TBucketView} & plot RF bucket & 640 \\
 \hline
-\tabogui{opachroma} & \guico{TChroma} & nonlinear optimization & 1413 \\
-\taboguif{csexframe} & \guico{TCSex} & controller for nonlinear element & 454 \\
-\taboguif{chamframe} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
-\tabouni{chromreslib} & & little helper to pass results handles & 79 \\
-\tabouni{chromelelib} & & little helper to pass element handles & 93 \\
-\tabogui{ochromsvector} & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
-\tabouni{chromlib} & & nonlinear dynamics calculations & 1813 \\
+\tabogui{opachroma} & & \guico{TChroma} & nonlinear optimization & 1413 \\
+\taboguif{csexframe} & \guifco{SF} & \guico{TCSex} & controller for nonlinear element & 454 \\
+\taboguif{chamframe} & \guifco{HF} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
+\tabouni{chromreslib} & \unico{CR} & & little helper to pass results handles & 79 \\
+\tabouni{chromelelib} & \unico{CE} & & little helper to pass element handles & 93 \\
+\tabogui{ochromsvector} & & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
+\tabouni{chromlib} & \unico{CH} & & nonlinear dynamics calculations & 1813 \\
 \hline
-\tabogui{opaorbit} & \guico{TOrbit} & orbit correction and injection & 2353 \\
+\tabogui{opaorbit} & & \guico{TOrbit} & orbit correction and injection & 2353 \\
 \hline
-\tabogui{opatrackps} & \guico{} & phase space tracking & 1422 \\
-\tabogui{opatrackda} & \guico{} & dynamic aperture tracking & 1666 \\
-\tabogui{opatracktt} & \guico{} & Touschek tracking & 1726 \\
-\tabouni{tracklib} & & particle tracking calculations & 1502 \\
+\tabogui{opatrackps} & & \guico{} & phase space tracking & 1422 \\
+\tabogui{opatrackda} & & \guico{} & dynamic aperture tracking & 1666 \\
+\tabogui{opatracktt} & & \guico{} & Touschek tracking & 1726 \\
+\tabouni{tracklib} & \unico{TL} & & particle tracking calculations & 1502 \\
 \hline
-\tabogui{opalgbedit} & \guico{} & longitudinal gradient bend editor & 702 \\
-\tabouni{lgbeditlib} & & longitudinal gradient bend calculations & 471 \\
+\tabogui{opalgbedit} & & \guico{} & longitudinal gradient bend editor & 702 \\
+\tabouni{lgbeditlib} & \unico{LG} & & longitudinal gradient bend calculations & 471 \\
 \hline
-\tabogui{opageometry} & \guico{} & geometric machine layout and matching & 2010 \\
-\tabogui{opacurrents} & \guico{} & export magnet currents to machine control & 303 \\
-\tabouni{testcode} & & test of new features & 472 
+\tabogui{opageometry} & & \guico{} & geometric machine layout and matching & 2010 \\
+\tabogui{opacurrents} & & \guico{} & magnet currents to machine control & 303 \\
+\tabouni{testcode} & \unico{TC} & & test of new features & 472 
 \end{tabular}
 }
 \end{table}
+
+\begin{figure}
+\centering
+\includegraphics[width=130mm]{blockdiag.png}
+\label{blockfig}
+\caption{Block diagram of the OPA GUIs. \guifco{Frames} and \unico{units} are indicated by the short cuts given in column "SC" of table~\ref{tabover} in order to avoid a messy diagram. The {\color{red}\sf\small PER} switch indicates that these calls are only available if a periodic solution exists. Dashed arrows correspond to results calculated in one GUI and optionally used by another one. }
+\end{figure}
 
 \pagebreak
 
@@ -1565,7 +1574,7 @@ The GUI contains two plot windows for horizontal and vertical orbit and a line-u
 }
 
 \uses{
-\oguif{knobframe},  \ouni{linoplib}, \ouni{ostartmenu}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}
+\oguif{knobframe},  \ouni{linoplib}, \ogui{ostartmenu}, \ouni{globlib}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}
 }
 
 \ppro{
@@ -1792,17 +1801,53 @@ The \guico{MakePlot} procedure shows a variety of DA-plots depending on mode, me
 
 \oguih{Touschek lifetime}{opatracktt} 
 
-Touschek tracking: Lifetime is calculated as described in Appendix \ref{apptous} from bunch volume and momentum acceptance (MA). The MA is the minimum of the linear MA given by the beam pipe apertures \code{>CalcMALin}, of the RF-MA which is derived from input parameters or has been calculated previously by {\tt opabucket}, and of the dynamic MA obtained from tracking and binary search for min./max. stable momentum offset \code{>MADyn, Trackdbins, TrackLat}.
+\desc{Touschek lifetime is calculated from bunch volume and momentum acceptance (MA). The MA is the minimum of the linear MA given by the beam pipe apertures, of the RF-MA which is derived from input parameters or has been calculated previously by \ogui{opabucket}, and of the dynamic MA obtained from tracking and binary search for min./max. stable momentum offset. The bunch volume is calculated from the periodic optics solution with its emittance and energy spread.
 
-The bunch volume is calculated from the periodic optics solution with its emittance and energy spread \code{>CalcSigma}.
+The GUI has two plot windows, \guico{fig} to show parameters along the lattice, to be selected by the radio buttons in the \guico{rgshow} group, and \guico{flofig} to show the 3-d $(x,x',\Delta p/p)$ acceptance if it has been previously calculated by \ogui{opatrackda}. There are two panels \guico{panin} and \guico{panot}, one for manual input values and the other one for derived values, like a spreadsheet. However, the input for emittance coupling is disabled if the lattice contains coupling to generate vertical emittance, and the inputs for cavity voltage and harmonic number are disabled if a previous call to \ogui{opabucket} provides values for RF-MA and bunch length.
 
-The GUI has two panels for several input values affecting lifetime and for derived values \code{>Output}.
+Lifetime, or actually the MA, can be calculated in two modes: In both modes a binary search for the maximum/minimum momentum of a test particle started on axis is performed, and the starting position is stepped up along the lattice at a given spatial resolution. In the classical mode \ofldx{Track}, a given number of turns is tracked to check if the particle survives. In the new Fast Touschek Tracking (FTT) mode \cite{FTTpaper} \ofldx{Track fast} the particles are only tracked to the end of the lattice and tested to be within the 3-d acceptance from \ogui{opatrackda}. \todo{There is a draft implementation of a third mode \ofldx{Track sync} including a primitive model of sychrotron oscillation, but it is incomplete and very slow. For 6-d Touschek tracking other codes like \code{Tracy-3} in batch mode are more suitable.}
 
-Coulomb lifetime is calculated from the effective acceptance, hower this includes only the physical, not the dynamic aperture limits \code{>CalcAccEL}. Bremsstrahlung lifetime uses the negative MA as used for Touschek lifetime too. Total lifetime is given as the inverse of the sum of the loss rates \code{>CalcLifetime}.\\
-
-
+Gas lifetime is calculated too, Coulomb lifetime (elastic scattering) from the effective acceptance, \todo{however this includes only the physical, not the dynamic aperture limits.} Bremsstrahlung (inelastic scattering) uses the negative MA as used for Touschek lifetime anyway.
+} 
 
 \uses{\ouni{tracklib}, \ouni{linoplib}, \ouni{globlib} \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/vgraph}, \ouni{../com/asaux}}
+
+\ppro{
+\guico{Start} sets plot window \guico{flofig} to visible and reduces the size of the main plot \guico{fig} correspondingly, if there are data for the 3-d acceptance (flag \unico{status.FloPoly}). Then it reads user settings and fills the input fields with these values. 
+All labels and edit fields are created dynamically and thus not visible in the IDE. If coupling and bucket data are available, the corresponding input fields are disabled and only passively show the existing values (flags \unico{status.uncoupled, .rfaccept}). 
+
+Periodic solution is calculated. It has to exist, otherwise launching the GUI would be blocked in \ogui{opamenu}). An array of data for plotting apertures is established. \ouni{tracklib} is told to use element apertures for tracking, and the MA is set to include RF-MA by default (can be changed by checkbox \guico{chkRFL}). 
+
+Procedure \guico{Output} is called to set up to do a complete calcu;ation of linear lifetime, i.e. lifetime based on apertures and linear beam dynamics. It calls procedure \guico{CalcBeta}, which performs following steps: 1.~it defines plot parameters. 2.~It calls \guico{InitSigma} to create typed array \guico{tsig} to keep all position dependent data like beta function, MA, loss rate etc. Beta functions are already known and written into this array. 3.~It calls \guico{CalcMAlin} to calculate the linear physical lattice MA from the apertures and the local $\cal H$-function~\cite{inside}. 4.~It calls \guico{CalcAccEL} to calculate the relevant acceptances for elastic scattering lifetime~\cite{inside}.
+
+After these initialization, \guico{Output} calculates the derived values: it first converts the input values to SI-units. If the lattice contains coupling, emittances are taken over from the periodic solution, if not, they are calculated from the input value for coupling. If coupling is zero, it is set to 0.1\%\ and a warning message pops up. If RF-MA and bunchlength were calculated by \ogui{opabucket}, the values are taken over, if not, they are calculated from the input values for voltage and harmonic number. In both cases the synchtron tune is calculated in linear approximation from the main voltage only. Then the bunch volume is calculated from betas, emittance and bunch length (\guico{CalcSigma}). Linear Touschek lifetime is calculated from the minimum of the linear MA (as given by the apertures) and the RF-MA (\guico{CalcLifetime}), if the check box \ofld{RF limit} is checked, otherwise RF-MA is ignored. Gas lifetime and total lifetime are calculated as described above. Finally the derived values are written to the output fields after conversion from SI to convenient units.
+}
+
+
+\act{}
+\evcodx{input fields}{edin\_Action} is used by all input fields. Values are checked for consistency and corrected if needed, then procedure \guico{Output} is called with different flags depending on the input to only calculate derived values which are affected by this input. At start (see above) \guico{Output} calculates all.
+
+\evcodx{radio buttons}{rbClicked} creates the selected plot calling \guico{MakePlot}. If 3-d acceptance data are available, the 3-d volume is plotted by \guico{FloFigPlot}.
+
+\evcodx{form resize}{ResizeAll} performs a dynamic resize of the GUI and its components. If 3-d acceptance data are available, space is left for a plot to show them and the main plot window is reduced in size.
+
+\evcod{Track, Track fast, Track sync}{but(t,t\_F,t\_S)Click} start the three tracking procedures. They all call \guico{beforeTracking} and \guico{afterTrackin} before and after tracking to disable or enable buttons and show the MA plot during execution. First and third mode call \guico{TrackMAdyn} without and with synchrotron oscillation to get the local MA from tracking (\guico{TrackLat}) and binary search for momentum (\guico{Trackdbins}). Whenever momentum changes,  \prcod{tracklib}{TrackingMatrix} is called to concatenate linear elements to speed up tracking. \guico{TrackLat} uses \prcod{tracklib}{OneTurn} to calculate a number of turns and check for Loss. In the third mode, the particle momentum is varied using a primitive model of synchrotron oscillation (\todo{not recommended, because momentum change in every turn makes it very slow.})
+
+The second mode calls \guico{TrackMA\_FTT}: it loops over a given momentum range, sets up the tracking matrices (\prcod{tracklib}{TrackingMatrix}), tracks particles from all positions to the end of the lattice (\prcod{tracklib}{TrackToEnd}) and checks loss at the 3-d acceptance voume (\guico{checkFloP}). For details see~\cite{FTTpaper}.
+
+During execution, the ongoing search for min/max local MA is shown in the MA plot. After termination, the dynamic MA thus found is shown together with the linear MA and the RF-MA, and the dynamic lifetime is calculated.\\[1ex]
+
+\evcod{Break}{butBreakClick} aborts the tracking.
+
+\evcodx{zoom buttons}{butPlot[V]ZoomClick} are used to zoom into the main plot.
+
+\evcod{Exp data}{butFileClick} writes data to a text file (\todo{never used}).
+
+\evcod{EPS}{butPSClick} exports the currently set plot (main window only) to an \code{eps} file.
+
+\evcod{Exit}{Exit} saves user settings and closes the GUI.
+
+
 
 
 \ounih{Calculations}{tracklib}

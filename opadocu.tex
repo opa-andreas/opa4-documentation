@@ -12,6 +12,8 @@
 \parindent 0pt
 \sloppy
 
+\newcommand{\degree}{\mbox{$^{\circ}$}}
+
 \definecolor{cadmiumgreen}{rgb}{0.0, 0.42, 0.24}
 \definecolor{burntorange}{rgb}{0.8, 0.33, 0.0}
 
@@ -129,12 +131,13 @@ In version 4.2.0 all files were renamed following this convention for the file n
 Figure~\ref{blockfig} shows a block diagram of the GUIs. \\
 
 Table~\ref{tabover} also serves as a {\bf table of contents} with the first column listing the section numbers:
-Section \ref{secglob} will explain the "backbone" of OPA, which are the global datatypes and variables, the main menu and units for mathematics and graphics which are used by many GUIs. 
-Section \ref{secedit} contains lattice file handling and the two editors, text-based and "LEGO" block like.
+after section \ref{seclatdata} on organization of lattice data, 
+section \ref{secglob} will explain the "backbone" of OPA, which are the global datatypes and variables, the main menu and units for mathematics and graphics which are used by many GUIs. 
+Section \ref{secedit} contains lattice file handling and the two editors, text-based and "LEGO" block like, and a special editor for longitudinal gradient bends.
 
 Beam physics starts with section \ref{seclino} on the interactive linear optics design panel and related GUIs and units and continues with section~\ref{secmomo} on off-momentum optics and bucket viewer. The non-linear optimization module is explained in section~\ref{secnonl}, and section~\ref{secorin} covers injection and orbit correction.
 
-The three tracking modules with their library are explained in section \ref{sectrac}. Section~\ref{secspee} contains an editor for longitudinal gradient bends. Finally, machine layout and magnet currents are in section~\ref{secelse}.
+The three tracking modules with their library are explained in section \ref{sectrac}. Finally, machine layout and magnet currents are in section~\ref{secelse}.
 
 
 
@@ -161,6 +164,8 @@ Sec & Name & SC & class & Purpose & Size \\ \hline
 \tabogui{oelecreate} & & \guico{TEditElemCreate} & creation of an element & 144 \\
 \tabogui{oeleedit} & & \guico{TEditElemSet} & edit element parameters & 861 \\
 \tabogui{osegedit} & & \guico{TEditSegSet} & edit segment parameters & 444 \\
+\tabogui{opalgbedit} & & \guico{} & longitudinal gradient bend editor & 702 \\
+\tabouni{lgbeditlib} & \unico{LG} & & longitudinal gradient bend calculations & 471 \\
 \hline
 \tabogui{opalinop} & & \guico{Toptic} & linear optics design & 1143 \\
 \taboguif{knobframe} & \guifco{KF} & \guifco{TKnob} & slider to set element property & 421 \\
@@ -193,9 +198,6 @@ Sec & Name & SC & class & Purpose & Size \\ \hline
 \tabogui{opatracktt} & & \guico{} & Touschek tracking & 1726 \\
 \tabouni{tracklib} & \unico{TL} & & particle tracking calculations & 1502 \\
 \hline
-\tabogui{opalgbedit} & & \guico{} & longitudinal gradient bend editor & 702 \\
-\tabouni{lgbeditlib} & \unico{LG} & & longitudinal gradient bend calculations & 471 \\
-\hline
 \tabogui{opageometry} & & \guico{} & geometric machine layout and matching & 2010 \\
 \tabogui{opacurrents} & & \guico{} & magnet currents to machine control & 303 \\
 \tabouni{testcode} & \unico{TC} & & test of new features & 472 
@@ -206,11 +208,220 @@ Sec & Name & SC & class & Purpose & Size \\ \hline
 \begin{figure}
 \centering
 \includegraphics[width=130mm]{blockdiag.png}
-\label{blockfig}
-\caption{Block diagram of the OPA GUIs. \guifco{Frames} and \unico{units} are indicated by the short cuts given in column "SC" of table~\ref{tabover} in order to avoid a messy diagram. The {\color{red}\sf\small PER} switch indicates that these calls are only available if a periodic solution exists. Dashed arrows correspond to results calculated in one GUI and optionally used by another one. }
+\caption{\label{blockfig}
+Block diagram of the OPA GUIs. \guifco{Frames} and \unico{units} are indicated by the short cuts given in column "SC" of table~\ref{tabover} in order to avoid a messy diagram. The {\color{red}\sf\small PER} switch indicates that these calls are only available if a periodic solution exists. Dashed arrows correspond to results calculated in one GUI and optionally used by another one. }
 \end{figure}
 
 \pagebreak
+
+\section{\label{seclatdata}Data structure}
+
+This section will give an overview of the data types and variables used globally, i.e. by many or all of the GUIs and units of OPA. This includes the internal representation of the lattice and its elements, global parameters, data calculated by one unit and to be used by another one (the dahed arrows in Fig.~\ref{blockfig}), status flags and user settings. All these types and variables are defined in \ouni{globlib}.
+
+Like other beam dynamics programs OPA works on a lattice file. It contains {\em elements}, mainly magnets of different type, and {\em segments}, which are line-ups of elements and segments. One of the segments is selected and expanded to become {\em the lattice} to work with. Element parameters, e.g. quadrupole strength in the lattice file can be numbers or arithmetic expressions using {\em variables}, which are part of the lattice file too.
+
+\subsection{Variables}
+Type \unico{Variable\_type} is a record containing a name, a value and a string representing an arithmetic expression, and \unico{Variable} is an array of these. If the string is \code{nil} the variable is just a value, otherwise the value is given by evaluation of the expression at runtime. The expression may contain numbers, other variables, basic operators ({\tt +-*/}) and an arbitrary number of bracket pairs. The variable name has to start with a character, then numbers and characters may follow. Syntax check is performed. Example: {\tt A = 0.5; XB3S = (1.0-A)/2;}
+
+Variables may be referenced by elements. Two more fields in the variable record control if the variable is used by an element or connected to a knob in design.
+
+\subsection{Elements}
+Type \unico{ElementType} is a case-record for defining element parameters, and type \unico{ElemArr} is an array of these. The global variables \unico{Elem} and \unico{Ella} are of type \unico{ElemArr} and store all elements, resp. the subset of elements currently used in the active lattice. The elements in \unico{Elem} are read from the lattice file and manipulated in the editors, while the elements in \unico{Ella} are modified in the various GUIs. After terminating a design calculation the user is asked to save or cancel the changes, which causes the \unico{Ella}-data to be copied back to the \unico{Elem} array or not.
+
+All elements have length, aperture and a rotation angle (roll) and a type. Furthermore a pointer may give a list of real names for machine control (optionally used for geometry data output, \ogui{opageometry} and exporting power supply currents, \ogui{opacurrents}). 
+
+Depending on type different parameters are defined in tables \ref{tabel2} and \ref{tabel1}. Columns "in file" and "in record" refer to the keywords to be set in the lattice text file and the corresponding field in the \unico{ElementType} record. An asterisk after a field name like \unico{l*} indicates, that an arithmetic expression is allowed too, which refers to a field of same name with suffix \code{\_exp}, in this case \unico{l\_exp}. It contains a pointer to a string with the expression making use of variables (see unit \ouni{globlib} code for details). 
+The column "unit" refers to the physical unit to be given in the file. Internally all values are SI-units \todo{CORRECT???}. The column "note" refers to these comments:
+
+\begin{table}
+\caption{\label{tabel2}Element description, part I}\vspace{1em}
+\begin{tabular}{lllcr}
+Property & in file & in record & unit & note \\
+\hline
+\multicolumn{5}{l}{{\bf All elements}}\\
+Name	& & \unico{nam} & & \\ 
+Length		& {\tt L} & \unico{l*} & m & \\
+Apertures & {\tt Ax, Ay} & \unico{ax, ay} & mm & a) \\
+Rotation & {\tt Rot} & \unico{rot*} & \degree & b) \\
+Type & & \unico{cod} & & \\
+\hline
+\hline
+{\bf Drift} & {\tt Drift} & \unico{cod=cdrif} & & \\
+(protect) & {\tt Block} & \unico{block} & -/- & c) \\
+\hline
+{\bf Quadrupole} & {\tt Quadrupole} & \unico{cod=cquad} & & \\
+Strength & {\tt K} & \unico{kq*} & m$^{-2}$ & \\
+\hline
+{\bf Bending magnet} & {\tt Bending} & \unico{cod=cbend} & & \\
+Deflection & {\tt T} & \unico{phi*} & \degree & d) \\
+Edge angles & {\tt T1, T2} & \unico{tin*, tex*} & \degree & \\
+Focusing strength & {\tt K} & \unico{kb*} & m$^{-2}$ & \\
+Full gap & {\tt Gap} & \unico{gap} & mm & \\
+Edge K1 & {\tt K1, K1in, K1ex} & \unico{k1in, k1ex} & 1 & e) \\
+\hline
+{\bf Combined function} & {\tt Combined} & \unico{cod=ccomb} & & f) \\
+Deflection & {\tt T} & \unico{cphi*} & \degree & d) \\
+Edge angles & {\tt T1, T2} & \unico{cerin*, cerex*} & \degree & \\
+Focusing strength & {\tt K} & \unico{ckq*} & m$^{-2}$ & \\
+Full gap & {\tt Gap} & \unico{cgap} & mm & \\
+Edge K1 & {\tt K1, K1in, K1ex} & \unico{ck1in, ck1ex} & 1 & e) \\
+Sextupole strength & {\tt M} & \unico{cms} & m$^{-3}$ & g) \\
+(slices) & {\tt N} & \unico{cslice} & 1 & h) \\
+\hline
+{\bf Sextupole} & {\tt Sextupole} & \unico{cod=csext} & &  \\
+Sextupole strength & {\tt K} & \unico{ms} & m$^{-3}$ & g)i) \\
+(slices) & {\tt N} & \unico{sslice} & 1 & h) \\
+\hline
+{\bf Thin multipole} & {\tt Multipole} & \unico{cod=cmpol} & &  \\
+Multipole order & {\tt N} & \unico{nord} & 1 &  \\
+Integrated strength & {\tt K} & \unico{bnl} & m$^{1-n}$ &  g) \\
+length & {\tt Lmag} & \unico{lmpol} & m & j) \\
+\hline
+{\bf Undulator} & {\tt Undulator } & \unico{cod=cundu} & &  k)\\
+Period length & {\tt Lamb} & \unico{lam} & mm &  \\
+Peak field & {\tt Bmax}&  \unico{bmax} & T & \\
+Full gap & {\tt Gap} & \unico{ugap} & mm & \\
+Fill factors & {\tt F1,2,3} & \unico{fill1,2,3} & 1 & l) \\
+(half) & {\tt Half} & \unico{halfu} & -/- & m) \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\caption{\label{tabel1}Element description, part II}\vspace{1em}
+\begin{tabular}{lllcr}
+Property & in file & in record & unit & note \\
+\hline
+{\bf Kicker} & {\tt } & \unico{cod=ckick} & &  \\
+Multipole order  & {\tt N} & \unico{mpol} & 1 &  \\
+Peak field offset  & {\tt X} & \unico{xoff} & mm & n)  \\
+Int. strength $\leftrightarrow$ peak kick & {\tt K} & \unico{amp} & m$^{1-n}$ $\leftrightarrow$ mrad & \\
+Period & {\tt T} & \unico{tau} & ns & o) \\
+Delay & {\tt Delay} & \unico{delay} & ns & o) \\
+(slices) & {\tt NK} & \unico{kslice} & 1 & \\
+\hline
+{\bf Septum} & {\tt } & \unico{cod=csept} & &  \\
+\multicolumn{5}{l}{(not yet implemented)} \\
+\hline
+{\bf Solenoid} & {\tt } & \unico{cod=csole} & &  \\
+Strength & {\tt K} & \unico{ks} & m$^{-1}$ &  \\
+\hline
+{\bf Hor. corrector} & {\tt H-corrector} & \unico{cod=ccorh} & & p) \\
+Kick & {\tt Dxp} & \unico{dxp} & mrad &   \\
+\hline
+{\bf Vert. corrector} & {\tt V-corrector} & \unico{cod=ccorv} & &  p) \\
+Kick & {\tt Dyp} & \unico{dyp} & mrad &   \\
+\hline
+{\bf BPM} & {\tt Monitor } & \unico{cod=cmoni} & &  p) \\
+\multicolumn{5}{l}{ --~no parameters to set~-- }\\
+\hline
+{\bf Girder} & {\tt } & \unico{cod=cgird} & &  \\
+Type & {\tt typ} & \unico{gtyp} & 1 &  q) \\
+Shift & \multicolumn{4}{l}{(not implemented)} \\
+\hline
+{\bf Optics marker} & {\tt } & \unico{cod=comrk} & & r) \\
+Orbit & {\tt OrbitX/Y,OrbitXp/Yp} & \unico{om$^{\wedge}$.orb} & mm, mrad & \\
+Normal mode betas & {\tt BetaX/Y, AlphaX/Y} & \unico{om$^{\wedge}$.bet} & m, 1 & \\
+Dispersion & {\tt EtaX/Y, EtaXp/Yp} & \unico{om$^{\wedge}$.eta} & m, 1 & \\
+Coupling matrix & {\tt C11, C12, C21, C22} & \unico{om$^{\wedge}$.cma} & m, 1, m$^{-1}$ & \\
+(screen) & {\tt Screen} & \unico{screen} & -/- & \\
+\hline
+{\bf Photon beam} & {\tt PhotonBeam} & \unico{cod=cxmrk} & &  s) \\
+Length & {\tt XL} & \unico{xl} & m & \\
+Style & {\tt Style} & \unico{nstyle} & 1 &  \\
+\hline
+{\bf Marker} & {\tt Marker} & \unico{cod=cmark} & & t) \\
+\hline
+{\bf Rotation} & {\tt Rotation} & \unico{cod=crota} & & t) \\
+\hline
+\end{tabular}
+\end{table}
+
+a) a rectangular aperture $(\pm a_x)\times(\pm a_y)$ is assumed for aperture checks in tracking, however an elliptic aperture (half axes $a_x$, $a_y$) is assumed for calculation of linear acceptance and for Coulomb lifetime.
+
+b) positive rotation is counter-clockwise around the beam direction, i.e. 90\degree\ rotation of a dipole will deflect the beam upwards.
+
+c) if keyword is present, the drift is shown as grey solid, not invisible; useful to indicate protected space, e.g. coils of a magnet.
+
+d) Positive deflection is towards the ring center, i.e. in $-x$-direction and thus will create positive dispersion.
+
+e) $K_1$ is the fringe field parameter defined by Brown (see \cite{inside}: elements/on-axis). If only {\tt K1} is given in the lattice, the same parameters is applied to both edges. 
+
+f) ``Bending'' and ``Combined'' are almost identical, except that ``Combined'' allows a sextupole component. This has historical reasons. \todo{to be merged in one element.}
+
+g) Multipole definition includes the factorial, i.e. $b_n = \frac{p}{e}\frac{1}{(n-1)!}\frac{d B^{(n-1)}_y}{d x^{n-1}}$
+
+h) Internally the thick, nonlinear magnet is approximated by $N$ slices of length $L/N$ with a thin multipole of integrated strength $b_nL/N$ at the center.
+
+i) If sextupole length is given as zero, the strength is integrated strength, unit m$^{-2}$.
+
+j) Multipole is always considered thin. If a length {\tt LMAG} (not {\tt L}!) is given, it just reserves spaces of {\tt LMAG/2} on both sides of the single, thin kick.
+
+k) Helical undulators are not (yet) implemented, only planar undulators are supported.
+
+l) Undulator fill factors used for fast calculation of radiation integral \cite{inside}, depending on the field variation over a period. Default is sinusoidal field. 
+
+m) Internally, an undulator is modelled as a series of small dipoles, where the dipoles at entry and exit are attenuated to $1/4$ and $-3/4$ field of the inner array dipoles. The keyword {\tt half} suppresses the attenuation at the exit, because sometimes one likes to split the undulator {\tt(U)} to insert a marker {\tt(M)}. In this case the full undulator is modeled from two halfves as {\tt(U,M,-U)}.
+
+n) For {\tt X=0} the kicker is considered a pure multipole kicker and {\tt K} gives its integrated strength. Non-zero {\tt X} identifies a non-linear kicker with $\sin^{n-1}(2\pi x/X)$ shaped field, and {\tt K} is the maximum kick in mrad at {\tt X}. For a dipole kicker {\tt (N=1)} the field shape is the same for both cases, and {\tt K} is the kick in mrad.
+
+o) The pulse is assumed to be of half-sine shape with length ($=$ half period) {\tt T}, starting/ending at {\tt Delay$\pm$T/2}. Beam time of flight is counted from the start of the lattice, and the delay has to be adjusted appropriately to kick the beam (the injection module provides a synchronization button).
+
+p) Correctors with reserved names {\tt CH}, {\tt CV}, and monitors with name {\tt MON} are considered components of the orbit correction system, will be expanded into a series of individual elements and set by the orbit correction procedure in \ogui{opaorbit}. In the lattice a series of elements named {\tt CH001, CH002 ...} will appear, but these are not saved to the file, since they don't have design values but will be set by orbit correction. The same is true for skew quadrupoles with reserved name {\tt CS}. \todo{However, OPA does not yet contain a coupling correction scheme.}
+
+q) The girder element defines the begin or end of a girder, thus they should appear always in pairs. Type 0 is a loose end, type 1 is a ``train link'', i.e. a [virtual] joint to the next girder, type 2,3 are secondary girders sitting on top of primary girders, where the roll of the primary girder is transmitted for type 3, but not for type2 For example the SLS dipoles bridge the girders, with 2 contact points (type 3) on one girder, and 1 contact point (type 2) on the other girder.
+
+r) OpticsMarkers are useful for building a lattice and matching. They are markers in the lattice which on request save all 16 transverse optical parameters defining the beam (orbit, beta functions, dispersions and the coupling matrix), and which can be used as starting point for optics calculations or target points for matching. The keyword {\tt screen} indicates an optical screen to be indicated in the geometry layout.
+
+s) Presently photon beam is only used for plotting x-ray beams in the geometry layout, \ogui{opageometry}. There are 3 different styles (0,1,2) which can be used for different source types.
+
+t) Simple marker and beam rotation don't have additional parameters.
+
+
+
+\subsection{Segments}
+A segment is a mixed line-up of elements and segments referenced by name. Segments are unpacked recursively to build the lattice. Type \unico{Segment\_type} is a record containing a name and two pointers to the first and last entry. These pointers are of type \unico{AbstractElement\_type}, which contains the name of the element or segment, the kind, i.e. if it is an element {\em or} a segment, a flag to tell if the entry is inverted, a number how often to repeat the entry, and two pointers to the previous and next element. \unico{Segm} is an array of \unico{Segment\_type}. 
+
+\subsection{Lattice and girders}
+\unico{Lattice} is an array of \unico{LatticeType} records containing the name and index of the element, the direction how it is installed , the (optional) index of the {\em girder} it sits on, and five real numbers for misalignment and attenuation factors. Two boolean flags tell if the element is coupling and if misalignments were set to speed up calculations later. 
+
+\feature{Unlike several other codes OPA handles correctly nested inversions of segments to obtain the correct orientation of the element in the lattice. This is relevant for bending magnets with unequal edge properties.}
+
+Using girders is optional and not required for optics design. Girders are used in orbit correction, \ogui{opaorbit}, and also shown in the geometry plot, \ogui{opageometry}. \unico{Girder} is an array of \unico{GirderType} records. It contains position and orientation of the girder, the misalignments of its feet, the index in the lattice array where it starts and ends, and an information how it is connected to the adjacent girders. 
+
+\subsection{Global parameters, status flags and intermediate results}
+Variable \unico{Glob} of type \unico{GlobType} contains parameters which are used by most units, like the beam energy, the sizes of lattice and element arrays, the optics parameters at the begin and end of the current lattice and more. 
+
+Variable \unico{Beam} of type \unico{BeamParType} contains calculated beam parameters like emittances, tunes etc. However, units making use of beam parameters usually recalculate the lattice at start to make sure that the parameter settings are correct and consistent.
+
+Variable \unico{Status} of type \unico{StatusType} contains boolean flags to keep track of the calculation progress, e.g. if the lattice has been built already, and special lattice features, e.g. if there are active kickers. Depending on the status the different GUIs are enabled, for example non-linear optimization is only possible if a periodic solution exists. Furthermore, the array \unico{StatusLabels} of type \code{TLabel} gives status information in the main menu \ogui{opamenu}. Several constants named \unico{Status\dots} control the appearance.
+
+Variable \unico{SnapSave} of type \unico{SnapSaveType} keeps intermediate results, corresponding to the dashed arrows in Fig.~\ref{blockfig}. Originally it was used at SLS to export data to an EPICS \code{.snap} file for machine control by \ogui{opacurrents}, but later is was extended for more  internal communication between the OPA GUIs. The record contains following data:
+\begin{itemize}
+\item tunes and chromaticities and two $2\times 2$ matrices for moving the working point using all quadrupoles as calculated by \ogui{otunematrix} and shifting the chromaticities using two sextupole families as calculated by \ogui{opachroma}.
+\item Analytical results for amplitude dependent tune shifts and chromaticities calculated by \ogui{opachroma} are used by \ogui{opamomentum} and \ogui{opatrackps} for comparison.
+\item Momentum compaction up to fifth order calculated by \ogui{opamomentum} is used by \ogui{opabucket} for RF bucket calculation.
+\item RF voltage up to fifth order and RF wavelength as entered into the \ogui{opabucket} GUI, and bunch length and momentum acceptance calculated from the RF bucket are used by \ogui{opatracktt} for Touschek lifetime calculation. 
+\end{itemize}
+Furthermore the record stores some data for synchrotron radiation source points which once were exported to an camera application in the SLS control system. On the other hand, dynamic aperture data calculated by \ogui{opatrackda} and to be used for fast Touschek tracking in \ogui{opatracktt} are not included in the global \unico{SnapSave} variable in \unico{globlib} but located as a couple of variables named \unico{Flo\dots} in \unico{tracklib}, which is used by these two tracking GUIs.
+
+\todo{The management of global parameters, status flags and intermediate results developed through history and should be re-organized in a more systematic way. In particular, there are some flaws, so data are not always invalidated, if something affecting them was modified in the lattice~-- here, the user has to know what he/she does\dots\ And \unico{globlib} contains a couple of 
+public variables of basic types, which better should not be public to avoid errors and confusion. Wherever possible they may become local, or they should be hidden behind set- and get-procedures.}
+
+
+\subsection{User settings}
+For convenience OPA writes and reads user settings to/from files. 
+
+In the OPA program folder, are two files, \code{opa4\_path.ini} and \code{opa4\_glob.ini} which contain a list of last used lattice files and global settings (presently only the level how much diagnostics output is sent to an optional terminal window). \todo{It's a bad solution to have these files in the OPA program folder, because OPA needs write permission to this folder. A better solution should be found.}
+
+In each working folder containing lattice files is a file \code{opa4\_set.ini}, which is read at start or when switching the working folder, and written on exit or leaving the working folder. If the \code{.ini} file does not exist it is created and filled with default values. Presently (version 4.2.2) 291 user settings are remembered, for example target values for matching or size of a GUI. 
+
+Arrays \unico{GlobDef} and \unico{Def} keep the user settings. They are of type \unico{DefaultType} which is a record containing a unique name for the setting and its value. The names of recently  used files are stored in string array \unico{LastUsedFiles}. All these arrays are in \ouni{globlib}.
+
+
+
+
+
 
 \section{\label{secglob}Main programs and general use}
 
@@ -222,76 +433,72 @@ Sec & Name & SC & class & Purpose & Size \\ \hline
 \ounih{Global data}{globlib}
 
 \desc{
-This unit defines global constants, types and variables and thus is OPA's "database". It is also initialized first when OPA starts and sets environment variables and default values. Public variables defined here are used by the other modules, since almost all of them use \ouni{globlib}. These "global" variables contain the basic lattice data, status flags, handles to access GUI components and temporary data to be exchanged between modules. This unit also provides many public procedures for various non-physics tasks. Only an overview can be given here, and the most important or complex things will be explained. Everything else should become clear from the code, hopefully.
+This unit defines global constants, types and variables as described in section~\ref{seclatdata} and thus is OPA's "database". It is also initialized first when OPA starts and sets environment variables and default values. Public variables defined here are used by the other modules, since almost all of them use \ouni{globlib}. This unit also provides many public procedures for various non-physics tasks. 
 
-\todo{The \ouni{globlib} unit grew large large and heterogenous over the years and should be split into several units for the different functions to be performed, or procedures should be moved to other units if applicable.}
-
-Like other beam dynamics programs OPA works on a lattice file. It contains {\em elements}, mainly magnets of different type, and {\em segments}, which are line-ups of elements and segments. One of the segments is selected and expanded to become {\em the lattice} to work with. Element parameters, e.g. quadrupole strength in the lattice file can be numbers or arithmetic expressions using {\em variables}, which are part of the lattice file too.
+Only a brief overview will be given here, because \todo{the \ouni{globlib} unit grew large and heterogenous over the years and should be split into several units for the different functions to be performed, for example: 1.~the "database", 2.~initialization and user settings, 3.~procedures for handling the lattice data, 4.~arithmetic evaluator, 5.~"little helpers", etc. Several procedures may be moved to other units, where they are used actually.} A complete documentation would naturally be established later during this disentangling process.
 }
 
 \uses{\opauni{../com/mathlib}, \opauni{../com/asaux}}
 
 \pvar{
-Constants include general settings, array sizes, color definitions, name strings and values of flags later to be referenced by name.\\
+Constants include general settings, array sizes, color definitions, name strings and values of flags later to be referenced by name.
 
-Following type definitions may be considered as non-trivial:
-
-\unico{ElementType} is a case-record for defining element parameters such as length, quad focusing strength, dipole bending angle etc. Several (but not all) parameters may be arithmetic expressions instead of numbers. For more details see the user guide \cite{userguide} or the source code. 
-
-\unico{variable\_type} is for variables defined by name and value or arithmetic expressions. Variables are referenced in arithmetic expressions of element parameters or in other variables.
-
-\unico{AbstractEleType} represents either an element or a segment and contains pointers to previous and next abstract elements. The abstract element may be inverted or repeated.
-
-\unico{SegmentType} is for segments, which are series of abstract elements, defined by pointers to its initial and final abstract element.
-
-\unico{LatticeType} is a lattice entry. The lattice is built by expanding a segment, so it contains only elements, and additional information on direction (if the element is inverted), and data relevant for orbit correction (misaligmnets and if the element sits on a girder). \\
-\feature{Unlike several other codes OPA handles correctly nested inversions of segments to obtain the correct orientation of the element in the lattice. This is relevant for bending magnets with unequal edge properties.}
+Most important types and arrays are listed in section \ref{seclatdata}. 
+Furthermore, following types are defined:
 
 \unico{OmarkType} is a set of optics data as property of the element type "optics marker".
 
 \unico{OpValType} is an extended set of optics data used for propagation in \ouni{elemlib}.
 
-\unico{GirderType} describes a girder by first and last lattice entry of elements sitting on the girder, and by the type of connection to adjacent girders.
-
 \unico{CurveType} is a point in an optical functions curve including a pointer to the next point.
 
 \unico{CurvePlotType} defines a curve by a pointer to its initial point.
 
-\unico{DefaultType} defines a user setting by name and value. Default values are defined by \\ \prcod{globlib}{Initialization} but can be modified by the user and saved.
-
-Other types are mainly shortcut definitions to gather interrelated data.\\
-
-Here are the most important global variables. If not mentioned otherwise, the type name is the variable name with suffix \code{type}. Usually only one instance exists:
-
-\unico{Elem} and \unico{Ella} are arrays of \unico{Elementtype}, where the first one is read from file and manipulated in the editors, while the second one are a subset of elements used in the lattice and to be modified in the various calculations. After terminating a calculation the user is asked to save or cancel the changes, which causes the \unico{Ella}-data to be copied back to the \unico{Elem} array or not.
-
-\unico{Segm}, \unico{Lattice} and \unico{Girder} are arrays of corresponding types. Maximum array length is defined in the \code{const} section of the unit.
-
-\unico{Glob} saves some global parameters like beam energy, default aperture size etc.
-
-\unico{Status} is a group of status flags to be set by the outcome of calculations in order to enable or disable buttons and to re-use data in other calculations.
-
 \unico{MainButtonHandles} provides global control of the various options in \ogui{opamenu} to enable or disable them based on the status flags.
 
-\unico{GlobDef} and \unico{Def} of \unico{DefaultType} are arrays of user-defined settings, which are read at start and when switching the working folder. 
-
-\unico{Beam} saves beam parameters like tune, emittance etc.
-
-\unico{SnapSave} stores intermediate results in order to re-use them in other modules, for example analytical results from the nonlinear optimization to compare them later with tracking. (Furthermore, some data are saved which are relevant for machine control and to be exported by \ogui{opacurrents} to an EPICS \code{.snap} file.) \todo{Data are not invalidated yet, if something was modified in the lattice.}
-
-\todo{There are more variables of basic types, which better should not be public to avoid errors and confusion. Wherever possible they may become local, or they should be hidden behind set- and get-procedures.}
-
+%\unico{ElementType} is a case-record for defining element parameters such as length, quad focusing strength, dipole bending angle etc. Several (but not all) parameters may be arithmetic expressions instead of numbers. For more details see the user guide \cite{userguide} or the source code. 
+%
+%\unico{variable\_type} is for variables defined by name and value or arithmetic expressions. Variables are referenced in arithmetic expressions of element parameters or in other variables.
+%
+%\unico{AbstractEleType} represents either an element or a segment and contains pointers to previous and next abstract elements. The abstract element may be inverted or repeated.
+%
+%\unico{SegmentType} is for segments, which are series of abstract elements, defined by pointers to its initial and final abstract element.
+%
+%\unico{LatticeType} is a lattice entry. The lattice is built by expanding a segment, so it contains only elements, and additional information on direction (if the element is inverted), and data relevant for orbit correction (misaligmnets and if the element sits on a girder). \\
+%
+%\unico{GirderType} describes a girder by first and last lattice entry of elements sitting on the girder, and by the type of connection to adjacent girders.
+%
+%\unico{DefaultType} defines a user setting by name and value. Default values are defined by \\ \prcod{globlib}{Initialization} but can be modified by the user and saved.
+%
+%Other types are mainly shortcut definitions to gather interrelated data.\\
+%
+%Here are the most important global variables. If not mentioned otherwise, the type name is the variable name with suffix \code{type}. Usually only one instance exists:
+%
+%\unico{Elem} and \unico{Ella} are arrays of \unico{Elementtype}, where the first one is read from file and manipulated in the editors, while the second one are a subset of elements used in the lattice and to be modified in the various calculations. After terminating a calculation the user is asked to save or cancel the changes, which causes the \unico{Ella}-data to be copied back to the \unico{Elem} array or not.
+%
+%\unico{Segm}, \unico{Lattice} and \unico{Girder} are arrays of corresponding types. Maximum array length is defined in the \code{const} section of the unit.
+%
+%\unico{Glob} saves some global parameters like beam energy, default aperture size etc.
+%
+%\unico{Status} is a group of status flags to be set by the outcome of calculations in order to enable or disable buttons and to re-use data in other calculations.
+%
+%
+%\unico{GlobDef} and \unico{Def} of \unico{DefaultType} are arrays of user-defined settings, which are read at start and when switching the working folder. 
+%
+%\unico{Beam} saves beam parameters like tune, emittance etc.
+%
+%\unico{SnapSave} stores intermediate results in order to re-use them in other modules
 }
 
 \ppro{
 This listing of procedures is more or less inverse to the (historical and illogical) arrangement in the source file:
 
-\unico{Initialization} sets some global variables to reasonable initial values, sets all status flags to false, and sets default values for $\sim$250 user settings.
-Then it sets the OPA directory and tries to read the files \code{opa4\_path.ini} which contains a list of last used files. Then it reads \code{opa4\_glob\_ini} containing global user settings (at the moment this is only the amount of output). Finally, it takes the folder from the first entry in the list of last used files to set the working folder and reads the file \code{opa4\_set.ini} in this folder to restore the $\sim$250 user settings. If these files are missing, the default values are used.
+\unico{Initialization} sets some global variables to reasonable initial values, sets all status flags to false, and sets default values for the user settings.
+Then it sets the OPA folder and tries to read the files \code{opa4\_path.ini} which contains a list of last used files, and \code{opa4\_glob\.ini} containing global user settings. Finally, it takes the folder from the first entry in the list of last used files to set the working folder and reads the local file \code{opa4\_set.ini} in this folder to restore the user settings. If these files are missing, the default values are used.
 
 \unico{GlobDefWriteFile} and \unico{DefWriteFile} write the user settings back to these files if the session is regularly terminated by \evcod{opamenu}{ExitOPA}.
 
-\unico{MakeLattice} builds the lattice from elements and segments. Since a segment istelf contains elements and segments, the internal procedure \unico{SegLat} is called recursively to unpack the data. 
+\unico{MakeLattice} builds the lattice from elements and segments. Since a segment itself contains elements and segments, the internal procedure \unico{SegLat} is called recursively to unpack the data. 
 %If a list of real names (from machine control system) is available, these names are 
 The elements, which are used in the lattice are copied from the \unico{Elem} to the \unico{Ella} array, and correctors and monitors with generic names \code{CH,CV,MON}
 are expanded into separate instances named \code{CH001,CH002...} to adress them individually in orbit correction in unit \ogui{opaorbit}. Finally status flags are set.
@@ -318,7 +525,7 @@ are expanded into separate instances named \code{CH001,CH002...} to adress them 
 
 \unico{EllaSave} and \unico{Elcompare} check if elements in lattice (\unico{Ella}) have been changed with regard to the original elements (\unico{Elem}) and ask the user if the changes should be saved.
 
-The procedures and functions listed under "Calculator" are an arithmetic evaluator adapted from \cite{rosetta}. Other procedures not listed here include variable, element and segment to string conversion and other utilities which may be self-explanbatory.
+The procedures and functions listed under "Calculator" are an arithmetic evaluator adapted from \cite{rosetta}. Other procedures not listed here include variable, element and segment to string conversion and other utilities which may be self-explanatory.
 }
 
 
@@ -423,7 +630,7 @@ Most procedures are elementary operations on vectors, matrices and complex numbe
 \unico{LUDCMP} and \unico{LUBKSB} peform LU-decomposition and backsubstitution to solve linear systems of equations as described in \cite{numrec}. This is used in particuar for matrix inversion, \unico{MatInv} and \unico{MatDet}. The procedures are set fix to 5 dimensions.
 
 
-\unico{svdcmp} and \unico{svbksb} perform singular value decomposition and backsubstitution to solver lineaer systems of equations as described in \cite{numrec}. SVD is superiour to LUD for non-square and degenerate systems. An packing/unpacking algorithms was added to use the procedures with arbitrary dimension. The procedure is used in orbit correction in \ogui{opaorbit} and for setting octupole families in \ogui{opachroma}.
+\unico{svdcmp} and \unico{svbksb} perform singular value decomposition and backsubstitution to solve linear systems of equations as described in \cite{numrec}. SVD is superior to LUD for non-square and degenerate systems. An packing/unpacking algorithms was added to use the procedures with arbitrary dimension. The procedure is used in orbit correction in \ogui{opaorbit} and for setting octupole families in \ogui{opachroma}.
 
 \unico{Powell} is an implementation of Powell's minimizer for steepest gradient search in $N$ dimensions taken from \cite{numrec}. It is used for sextupole optimization in \ogui{opachroma}, for longitudinal gradient optimization in \ogui{opalgbedit}, and (test mode only) for non-linear optimization in \ogui{opamomentum}.
 }
@@ -735,6 +942,24 @@ the new segment sequence is saved as linked list of abstract elements by \prcod{
 
 \evcod{cancel}{butcanClick} does nothing but exit.
 }
+
+
+\oguih{Longitudinal gradient bend editor}{opalgbedit} 
+
+\desc{This GUI is used to interactively optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. 
+}
+
+\uses{\ouni{globlib}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}}
+
+
+
+\ounih{LGB calculations}{lgbeditlib} 
+\desc{Physics procedures and plotting of longitudinal gradient bend optimization results.}
+
+\uses{\ouni{globlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}}
+
+
+
 
 \section{\label{seclino}Linear Optics}
 
@@ -1848,38 +2073,62 @@ During execution, the ongoing search for min/max local MA is shown in the MA plo
 \evcod{Exit}{Exit} saves user settings and closes the GUI.
 
 
-
-
 \ounih{Calculations}{tracklib}
 
-At start, all linear elements are concatenated to matrices alternating with non-linear (or time dependent) kicks in order to speed up tracking \code{>TrackinMatrix}. Physical acceptances are calculated either from element apertures or from given apertures to estimate the maximum range for tracking \code{>Acceptances}. Both calculations have to be re-done when changing the reference momentum \code{>Init\_dpp}.
-The available aperture in the $(x,y)$-plane is calculated for a set of rays to obtain the silhouette, i.e. projection of beam pipe apertures to the trackpoint as described in Appendix \ref{appgeoa} \code{>AmpKappa}. Optics parameters at the Trackpoint are calculated, which may be located anywhere, even inside an element \code{>TrackPoint}.
-
-Tracking proceeds turn by turn at fixed momentum \code{>OneTurn} (or with changing momentum based on a simple model of synchtron oscillation \code{>OneTurn\_S}). Tracking one turn proceeds by repeated application of the matrix for a series of linear elements, followed by a non-linear (or time dependent) kick and a check for particle loss \code{>TMatKick}.
-
-The procedures in the last third of the unit (from {\tt SineWindow} to the end) are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances.\\
-
+\desc{This unit contains procedures to prepare for tracking, to do the tracking and for postprocessing of tracking data. OPA tracking is 4-d treating particle momentum as a constant (adiabatic approximation). \todo{Implementation of a 6-d mode including synchrotron motion has been started but was never completed.}
+}
 
 \uses{\ouni{linoplib}, \ouni{elemlib}, \ouni{globlib} \ouni{mathlib}}
 
+\pvar{
+Base for all tracking calculations is the array \unico{TMat} of record \unico{TrackMatrixType}, where each element contains a transfer matrix and a thin non-linear kick representing the lattice. The matrix is a concatenation of all linear elements between non-linear kicks, this may range from a simple drift space inside a thick sextupole to a whole straight section. The non-linear kick may be a multipole or a kicker. \todo{There is also a vector to concatenate misalignments, but not yet well debugged.}
+
+Arrays \unico{data1,2} and \unico{FFT1,2} keep tracking data and Fourier spectra.
+
+Array \unico{geodpp} of \unico{geodpp\_type} keeps optics parameters of the momentum dependent periodic solution.
+
+Variables named \unico{FloP\dots} keep parameters of the 3-d acceptance calculated by \ouni{opatrackda} and used by \ouni{opatracktt}.
+
+Othre variables, mostly of elementary type, keep temporary data and control flags.
+}
+
+\ppro{}
+
+\unico{TrackInit} allocates arrays for signal processing and checks if data for synchrotron oscillation are available.
+
+\unico{Initdpp} gets the periodic solution for given momentum calling \prcod{linoplib}{ClosedOrbit,Periodic} and calls \unico{Acceptances} to get the physical acceptance. Then it calls \unico{TrackingMatrix} to set up the \unico{TMat} array and \unico{TrackPoint} to set the track point.
+
+\unico{Acceptances} calculates the optics element by element and checks the available stay clear based on local aperture and orbit. From beta function and dispersion follows the maximum betatron amplitude, which is then transformed to the track point to provide the physical acceptance. If the flag \unico{elaper} is set, element apertures are used, else apertures entered into the GUI override them (used for example to check the true DA indpendent from physical limits).
+
+\unico{Ampkappa} does the same but divides the available betatron amplitudes to horizontal and vertical depending on coupling \cite{inside} in order to plot the physical acceptance in the $(x,y)$-plane (used by \guico{Silhouette} in \ogui{opatrackda}).
+
+\unico{Acc\_dpp} gets periodic solutions and calls \unico{Acceptances} for a range of momentum values and saves data in the \unico{geodpp}-array.
+
+\unico{TrackingMatrix} concatentates all linear elements into one matrix, until it reaches a non-linear kick, and saves the matrix and the kick parameters. This gives an alternative lattice representation suitable for fast tracking. One turn may start/end at any location, even inside an element. This is needed for Touschek tracking in \ogui{opatracktt}. In \ogui{opatrackps} the track point may be set anywhere on purpose too. Internal procedures named \unico{\dots Cut} handle cut thick elements properly. Internal procedure \unico{appendTMat} appends another element (matrix $+$ kick) to the \unico{TMat}-array.
+
+\unico{TrackPoint} gets the optical parameters at any location in the lattice, even inside an element. For this purpose it contains a short-cut version of \prcod{elemlib}{MCC\_prop}, the most general propagation through an elmement which may also include coupling. It uses the \unico{TMat}-array which starts/ends at the specified lattice position.
+
+\unico{TMatKick} uses the \unico{TMat}-array to propagate a particle by multiplication with the matrix and applying the thin non-linear kick. Particle loss is checked at the kick {\todo only} by comparing particle amplitude to kick element aperture. Time of flight is summed up using the length of the lattice section corresponding to the concatenated matrix for correct modeling of kicker magnets.
+
+\unico{OneTurn} tracks one turn using \unico{TMatKick} and returns \code{true} if the particle was lost.
+
+(\todo{\unico{OneTurn\_S} was an attempt to implement synchrotron oscillation but not completed.})\\[1ex]
+
+The procedures in the last third of the unit are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances, to be used by \ogui{opatrackps}:
+
+\unico{savePStrackData} saves particle data for postprocessing.
+
+\unico{SineWindow} multiplies data with a half sine window to interpolate frequencies.
+
+\unico{TwoFFT,FOUR1,FFTtoAmpFTmax} perform the fast Fourier transformation~\cite{numrec} and turn the complex spectrum into amplitudes.
+
+\unico{FindPeaks} together with its little helper procedures performs frequency interpolation based on the sine window.
+
+\unico{ResoGuess,GuessRes} try to identify the resonances driving the observed frequencies~\cite{jbthesis}.
 
 
 
-\section{\label{secspee}Special Element Editors}
 
-
-\oguih{Longitudinal gradient bend}{opalgbedit} 
-
-
-
-
-\ounih{LGB calculations}{lgbeditlib} 
-
-
-
-\opamodule{opalgbedit.pas/.lfm}{(19.1k)}{globlib,  mathlib, ASfigure, ASaux}
-\opamodule{lgbeditlib.pas}{(13.9k)}{globlib, ASfigure, ASaux}
-These two procedures optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. The first procedure is mainly the GUI and the minimizer, the second one contains physics and plotting.
 
 
 \section{\label{secelse}Layout, Currents etc}
@@ -1954,6 +2203,7 @@ Topics--Accelerators and Beams 2 (1999) 074001, \url{https://doi.org/10.1103/Phy
 \bibitem{CONRECT}P. Bourke, CONREC, a contouring subroutine, \url{https://paulbourke.net/papers/conrec/}.
 \bibitem{rosetta}Rosetta Code, Arithmetic Evaluation, \url{https://rosettacode.org/wiki/Arithmetic\_Evaluator/Pascal}.
 \bibitem{FTTpaper}B. Riemann, M. Aiba, J. Kallestrup, A. Streun, Efficient algorithms for dynamic aperture and momentum acceptance calculation in synchrotron light sources, Phys. Rev. Accel. Beams, 27, 094002,2024, \url{https://doi.org/10.1103/PhysRevAccelBeams.27.094002}.
+\bibitem{jbthesis}J. Bengtsson, Non-linear transverse dynamics, CERN-88-05.
 \end{thebibliography}
 
 

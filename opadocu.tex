@@ -86,7 +86,7 @@
 \fboxsep1pt
 
 \parbox[t]{0.7\hsize}{
-  {\Huge\bf OPA documentation} version {\bf 4.2.0}\\
+  {\Huge\bf OPA documentation} version {\bf 4.2.3}\\
   Andreas Streun, \today
 } \hfill  \includegraphics{opalogo_small.jpg}
 \rule{\hsize}{1pt}
@@ -117,7 +117,7 @@ Questions may be adressed to the author at \url{mailto:psi@andreas-streun.de}.
 Following semantic versioning \cite{semver} version 4.063 of OPA was renamed 4.1.0. However, since up to now only the author worked on the code, the distinctions MAJOR, MINOR, PATCH rather refer to the changes as visible to the users than to the API. 
 
 
-Current version is OPA 4.2.1. It includes 44 Pascal units \code{.pas}, 29 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 15 of them are Pascal \opauni{units}. Four of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
+Current version is OPA 4.2.3. It includes 44 Pascal units \code{.pas}, 29 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 15 of them are Pascal \opauni{units}. Four of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
 Table~\ref{tabover} lists the units. The column "Size" lists the lines of code as a rough estimate for the complexity of the unit. Furthermore, OPA includes the main program file \ouni{opa.lpr} and a couple of image files \code{.ico, .bmp} to draw symbols on buttons. 
 
 A GUI defines a class, given in table~\ref{tabover} in the column "class". The actual GUI is the one and only instance of this class, i.e. a public variable, usually with the name as the class but without the leading "T". A frame also defines a class but no instance, instead the parent GUI will define one or more instances of this class as variables. A standard Pascal unit may also define a class to be instantiated, or it is a library, i.e. a collection of variables and public procedures.
@@ -125,14 +125,14 @@ A GUI defines a class, given in table~\ref{tabover} in the column "class". The a
 In general GUIs should handle the user interactions only while the Pascal units do all the calculations. This separation was largely realized in OPA, however not strictly. Some minor calculations are done in the GUI in some places.
 
 In version 4.2.0 all files were renamed following this convention for the file name: 
-\code{opa*} is a first level GUIs, i.e. one of the main design programs launched from the main menu. \code{*lib} is a plain Pascal units which contains a library of physics procedures. 
-\code{o*} is a second level GUI, which is launched by a first level GUIs, for example a start menu. \code{*frame} is a frame. Files in the \code{../com} folder were not renamed. 
+\code{opa*} is a first level GUI, i.e. one of the main design programs launched from the main menu. \code{*lib} is a plain Pascal units which contains a library of physics procedures. 
+\code{o*} is a second level GUI, which is launched by a first level GUI, for example a start menu. \code{*frame} is a frame. Files in the \code{../com} folder were not renamed. 
 
 Figure~\ref{blockfig} shows a block diagram of the GUIs. \\
 
 Table~\ref{tabover} also serves as a {\bf table of contents} with the first column listing the section numbers:
 after section \ref{seclatdata} on organization of lattice data, 
-section \ref{secglob} will explain the "backbone" of OPA, which are the global datatypes and variables, the main menu and units for mathematics and graphics which are used by many GUIs. 
+section \ref{secglob} will explain the "backbone" of OPA, which are global data and procedures, the main menu and units for mathematics and graphics which are used by many GUIs. 
 Section \ref{secedit} contains lattice file handling and the two editors, text-based and "LEGO" block like, and a special editor for longitudinal gradient bends.
 
 Beam physics starts with section \ref{seclino} on the interactive linear optics design panel and related GUIs and units and continues with section~\ref{secmomo} on off-momentum optics and bucket viewer. The non-linear optimization module is explained in section~\ref{secnonl}, and section~\ref{secorin} covers injection and orbit correction.
@@ -150,56 +150,56 @@ The three tracking modules with their library are explained in section \ref{sect
 {\small
 \begin{tabular}{llcllr}
 Sec & Name & SC & class & Purpose & Size \\ \hline
-\tabouni{globlib} & \unico{GL} & & global variables and procedures & 2986 \\
-\tabogui{opamenu} & &\guico{TMenuForm} & the main menu & 901 \\
+\tabouni{globlib} & \unico{GL} & & global variables and procedures & 2880 \\
+\tabogui{opamenu} & &\guico{TMenuForm} & the main menu & 903 \\
 \tabouni{mathlib} & \unico{ML} & & mathematical library & 2075 \\
-\tabouni{../com/vgraph} & \unico{VG} & \unico{Vplot} & real number graphics library & 1276 \\
-\taboguif{../com/asfigure} & \guifco{AF} & \guifco{TFigure} & general plot procedure & 314 \\
+\tabouni{../com/vgraph} & \unico{VG} & \unico{Vplot} & real number graphics library & 1277 \\
+\taboguif{../com/asfigure} & \guifco{AF} & \guifco{TFigure} & general plot procedure & 315 \\
 \tabouni{../com/conrect} & \unico{CO} & & contour plot calculation & 332 \\
 \tabouni{../com/asaux} & \unico{AX} & & little helpers & 349 \\
 \hline
-\tabouni{latfilelib} & \unico{LF} & & file reading and writing & 1839 \\
+\tabouni{latfilelib} & \unico{LF} & & file reading and writing & 1776 \\
 \tabogui{opatexteditor} & & \guico{TFormTxtEdt} & text editor for lattice file & 190 \\
 \tabogui{opaeditor} & & \guico{TFormEdit} & interactive lattice editor  & 346 \\
 \tabogui{oelecreate} & & \guico{TEditElemCreate} & creation of an element & 144 \\
 \tabogui{oeleedit} & & \guico{TEditElemSet} & edit element parameters & 861 \\
-\tabogui{osegedit} & & \guico{TEditSegSet} & edit segment parameters & 444 \\
+\tabogui{osegedit} & & \guico{TEditSegSet} & edit segment parameters & 451 \\
 \tabogui{opalgbedit} & & \guico{} & longitudinal gradient bend editor & 702 \\
 \tabouni{lgbeditlib} & \unico{LG} & & longitudinal gradient bend calculations & 471 \\
 \hline
-\tabogui{opalinop} & & \guico{Toptic} & linear optics design & 1143 \\
+\tabogui{opalinop} & & \guico{Toptic} & linear optics design & 1147 \\
 \taboguif{knobframe} & \guifco{KF} & \guifco{TKnob} & slider to set element property & 421 \\
 \tabogui{ostartmenu} & & \guico{Tstartsel} & setting for start parameters & 615 \\
 \tabogui{obetenvmag} & & \guico{TsetEnvel} & setting for optical functions plot & 372 \\
 \tabogui{otunematrix} & & \guico{TtuneMatrix} & adjustment of lattice tune & 251 \\
 \tabogui{owriteomrk} & & \guico{TWOMK} & write optics markers & 125 \\
-\tabouni{linoplib} & \unico{LO} & & linear beam dynamics calculations & 2840 \\
-\tabouni{elemlib} & \unico{EL} & & element propagation calculations & 2387 \\
-\tabogui{omatching} & & \guico{TMatch} & linear optics matching & 1457 \\
+\tabouni{linoplib} & \unico{LO} & & linear beam dynamics calculations & 2766 \\
+\tabouni{elemlib} & \unico{EL} & & element propagation calculations & 2363 \\
+\tabogui{omatching} & & \guico{TMatch} & linear optics matching & 1461 \\
 \tabogui{omatchscan} & & \guico{TsetMatchScan}& parameter scan & 119 \\
 \tabogui{opatunediag} & & \guico{TTunePlot} & show the tune diagram & 634 \\
 \hline
 \tabogui{opamomentum} & & \guico{Tmomentum} & momentum dependent optics & 949 \\
 \tabouni{momentumlib} & \unico{MO} & & momentum dependent calculations & 480 \\
-\tabogui{opabucket} & & \guico{TBucketView} & plot RF bucket & 640 \\
+\tabogui{opabucket} & & \guico{TBucketView} & plot RF bucket & 632 \\
 \hline
-\tabogui{opachroma} & & \guico{TChroma} & nonlinear optimization & 1413 \\
-\taboguif{csexframe} & \guifco{SF} & \guico{TCSex} & controller for nonlinear element & 454 \\
-\taboguif{chamframe} & \guifco{HF} & \guico{TCHam} & bar indicator for Hamiltonian mode & 416 \\
+\tabogui{opachroma} & & \guico{TChroma} & nonlinear optimization & 1329 \\
+\taboguif{csexframe} & \guifco{SF} & \guico{TCSex} & controller for nonlinear element & 427 \\
+\taboguif{chamframe} & \guifco{HF} & \guico{TCHam} & bar indicator for Hamiltonian mode & 420 \\
 \tabouni{chromreslib} & \unico{CR} & & little helper to pass results handles & 79 \\
 \tabouni{chromelelib} & \unico{CE} & & little helper to pass element handles & 93 \\
 \tabogui{ochromsvector} & & \guico{TSVectorPlot} & show Hamiltonian as complex vector & 145 \\
 \tabouni{chromlib} & \unico{CH} & & nonlinear dynamics calculations & 1813 \\
 \hline
-\tabogui{opaorbit} & & \guico{TOrbit} & orbit correction and injection & 2353 \\
+\tabogui{opaorbit} & & \guico{TOrbit} & orbit correction and injection & 2254 \\
 \hline
-\tabogui{opatrackps} & & \guico{} & phase space tracking & 1422 \\
-\tabogui{opatrackda} & & \guico{} & dynamic aperture tracking & 1666 \\
-\tabogui{opatracktt} & & \guico{} & Touschek tracking & 1726 \\
+\tabogui{opatrackps} & & \guico{TtrackP} & phase space tracking & 1422 \\
+\tabogui{opatrackda} & & \guico{TtrackDA} & dynamic aperture tracking & 1666 \\
+\tabogui{opatracktt} & & \guico{TtrackT} & Touschek tracking & 1660 \\
 \tabouni{tracklib} & \unico{TL} & & particle tracking calculations & 1502 \\
 \hline
-\tabogui{opageometry} & & \guico{} & geometric machine layout and matching & 2010 \\
-\tabogui{opacurrents} & & \guico{} & magnet currents to machine control & 303 \\
+\tabogui{opageometry} & & \guico{TGeometry} & geometric machine layout and matching & 2011 \\
+\tabogui{opacurrents} & & \guico{TCurrents} & magnet currents to machine control & 303 \\
 \tabouni{testcode} & \unico{TC} & & test of new features & 472 
 \end{tabular}
 }
@@ -367,7 +367,7 @@ n) For {\tt X=0} the kicker is considered a pure multipole kicker and {\tt K} gi
 
 o) The pulse is assumed to be of half-sine shape with length ($=$ half period) {\tt T}, starting/ending at {\tt Delay$\pm$T/2}. Beam time of flight is counted from the start of the lattice, and the delay has to be adjusted appropriately to kick the beam (the injection module provides a synchronization button).
 
-p) Correctors with reserved names {\tt CH}, {\tt CV}, and monitors with name {\tt MON} are considered components of the orbit correction system, will be expanded into a series of individual elements and set by the orbit correction procedure in \ogui{opaorbit}. In the lattice a series of elements named {\tt CH001, CH002 ...} will appear, but these are not saved to the file, since they don't have design values but will be set by orbit correction. The same is true for skew quadrupoles with reserved name {\tt CS}. \todo{However, OPA does not yet contain a coupling correction scheme.}
+p) Correctors with reserved names {\tt CH}, {\tt CV}, and monitors with name {\tt MON} are considered components of the orbit correction system, will be expanded into a series of individual elements and set by the orbit correction procedure in \ogui{opaorbit}. In the lattice a series of elements named {\tt CH001, CH002 ...} will appear, but these are not saved to the file, since they don't have design values but will be set by orbit correction. The same is true for skew quadrupoles with reserved name {\tt CS} and corrector quadrupoles with reserved name {\tt QAC}. \todo{However, OPA does not yet contain a coupling and gradient correction scheme.}
 
 q) The girder element defines the begin or end of a girder, thus they should appear always in pairs. Type 0 is a loose end, type 1 is a ``train link'', i.e. a [virtual] joint to the next girder, type 2,3 are secondary girders sitting on top of primary girders, where the roll of the primary girder is transmitted for type 3, but not for type2 For example the SLS dipoles bridge the girders, with 2 contact points (type 3) on one girder, and 1 contact point (type 2) on the other girder.
 
@@ -375,7 +375,11 @@ r) OpticsMarkers are useful for building a lattice and matching. They are marker
 
 s) Presently photon beam is only used for plotting x-ray beams in the geometry layout, \ogui{opageometry}. There are 3 different styles (0,1,2) which can be used for different source types.
 
-t) Simple marker and beam rotation don't have additional parameters.
+t) Simple marker and beam rotation don't have additional parameters.\\
+
+Furthermore, not listed in the table, the element record contains a field \unico{nl} of type \unico{NameListType} which is a linked containing real element names, power supply names and information on polarity and family topology. These data are defined in additional files defined by the keywords {\tt ALLOCATION} and {\tt CALIBRATION} in the lattice file. Unit \ouni{latfilelib}, reads and assigns these data. Unit \ogui{opacurrents} exports these data including calculated currents and more to the control system, and unit \ogui{opageometry} exports list of real names and geo data.
+
+However, for correctors (dipoles and monitors, skew and regular quads) with reserved names in the lattice file, the namelist is used to generate individual corrector names in the \unico{Ella} array of used elements to adress them in orbit correction, unit \ogui{opaorbit}.
 
 
 
@@ -491,7 +495,6 @@ Furthermore, following types are defined:
 }
 
 \ppro{
-This listing of procedures is more or less inverse to the (historical and illogical) arrangement in the source file:
 
 \unico{Initialization} sets some global variables to reasonable initial values, sets all status flags to false, and sets default values for the user settings.
 Then it sets the OPA folder and tries to read the files \code{opa4\_path.ini} which contains a list of last used files, and \code{opa4\_glob\.ini} containing global user settings. Finally, it takes the folder from the first entry in the list of last used files to set the working folder and reads the local file \code{opa4\_set.ini} in this folder to restore the user settings. If these files are missing, the default values are used.
@@ -946,7 +949,9 @@ the new segment sequence is saved as linked list of abstract elements by \prcod{
 
 \oguih{Longitudinal gradient bend editor}{opalgbedit} 
 
-\desc{This GUI is used to interactively optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. 
+\desc{This GUI is used to interactively optimize the field profile of a longitudinal gradient bend (LGB) in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Input fields accept the magnet type, i.e. end bend (dispersion suppressor) or center bend (symmetric cell), its length and peak field and the number of slices to model the magnet as a series of rectangular dipoles. A Powell minimizer is employed to adjust the magnetic field in the slices and the initial parameters (beta function and alpha function for end bend, resp. dispersion for center bend). Various plots demonstrate the results in comparison to a homogeneous bend. The LGB thus established is inserted into the element and segment arrays as an optics marker followed by a series of rectangular dipoles.}
+
+\todo{Although this GUI is well elaborated its practical use turned out to be limited, since the ideal LGB solution usually is compromised by contraints from optics and magnet design. Actually, deviations from the ideal field shape don't affect the emittance very much, and a simple low-high-low field "sandwich" magnet often is good enough. Therefore this GUI is considered as "nice to have", and detailed documentation of the \ogui{opalgbedit} and \ouni{lgbeditlib} units is postponed until the usefulness for design or education becomes more clear.
 }
 
 \uses{\ouni{globlib}, \ouni{mathlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}}
@@ -954,7 +959,7 @@ the new segment sequence is saved as linked list of abstract elements by \prcod{
 
 
 \ounih{LGB calculations}{lgbeditlib} 
-\desc{Physics procedures and plotting of longitudinal gradient bend optimization results.}
+\desc{Physics procedures for LGB optimizaiton and plotting of results.}
 
 \uses{\ouni{globlib}, \oguif{../com/asfigure}, \ouni{../com/asaux}}
 
@@ -1300,7 +1305,7 @@ The \unico{Slice(Drift,Quad,Sol,Bend)N} procedures call \unico{SliceSet} and cal
 
 \desc{Matching implements a linear equation solver based on LU decomposition for the linear optics. For historical reasons, it does not use the solver in \prcod{mathlib}{LUDCMP,LUBKSB} but the algorithm was explicitly coded in the 1980's by Klaus Wille (procedure \guico{Step}) , and is documented in his book~\cite{kwille}. Matching is done from a start point to an end point in the lattice. The lattice tunes and optics functions at an additional intermediate point may be included too.  After selecting these options, a list of available knobs is established. Then the user selects the constraints, i.e. the optics parameters at end (and intermediate) point, sets the target values and selects at least the same number of knobs (e.g. quadrupole strength, variable etc.) from the list. The solver proceeds using the square matrix of most sensitive knobs, which is recalculated after each step to take into account non-linearities. If successful, the method converges quadratically, if not it returns messages, what went wrong (procedure \guico{Term}). Reduced step size can be set for slower but more robust convergence. It is possible to run a scan over some range of target values. \\
 There are three panels at the right side of the GUI, one for the knobs, one for the matching process and one for parameter scans. Only one of them is visible at a time.\\
-\todo{The algorithm itself with catches for errors as implemented over the years, is quite robust and could be used further in principle. However, nowadays better and well proven solvers may be available, which also include limit ranges for the knobs. Further, the present procedure is restricted to uncoupled lattices and to only one intermediate point besides start and end of matching, which sometimes is a nuisance. The present GUI is well conistent (how options are enabled etc.) but its rigid structure makes extensions cumbersome. It should be re-organized for example using tabs.}\\
+\todo{The algorithm itself with catches for errors as implemented over the years, is quite robust and could be used further in principle. However, nowadays better and well proven solvers may be available, which also include limit ranges for the knobs. Further, the present procedure is restricted to uncoupled lattices and to only one intermediate point besides start and end of matching, which sometimes is a nuisance. The present GUI is well consistent (how options are enabled etc.) but its rigid structure makes extensions cumbersome. It should be re-organized for example using tabs.}\\
 Expecting a rewrite of this module in future, only a brief summary of the most important actions will be given here.}
 
 \uses{\ouni{linoplib}, \oguif{knobframe}, \ogui{omatchscan}, \ouni{globlib},  \oguif{../com/asfigure}, \ouni{../com/asaux}} 
@@ -1471,7 +1476,7 @@ For "playing" with the bucket, the viewer may also be used with manual input for
 
 \section{\label{secnonl}Non-linear Optimization}
 
-The units of this section are linked in a rather complex way as indicated by the \code{uses} declarations, since the main GUI \ogui{opachroma} contains many frames for knobs, \oguif{csexframe}, and for results, \oguif{chamframe}, which affect each other. This required the two small units \ouni{chromreslib}, \ouni{chromreslib}, to pass the handles. \oguif{csexframe} declares use of \ouni{chromreslib}, which declares use of \oguif{chamframe}. Vice versa,
+The units of this section are linked in a rather complex way as indicated by the \code{uses} declarations, since the main GUI \ogui{opachroma} contains many frames for knobs, \oguif{csexframe}, and for results, \oguif{chamframe}, which affect each other. This required the two small units \ouni{chromreslib}, \ouni{chromelelib}, to pass the handles. \oguif{csexframe} declares use of \ouni{chromreslib}, which declares use of \oguif{chamframe}. Vice versa,
 \oguif{chamframe} declares use of \oguif{csexframe} in the implementation section, i.e. at runtime, not in the interface section, to avoid a circular reference. \\
 \todo{There may be a better way to declare these dependencies.}
 
@@ -2131,25 +2136,69 @@ The procedures in the last third of the unit are for signal processing, to calcu
 
 
 
-\section{\label{secelse}Layout, Currents etc}
+\section{\label{secelse}Machine layout and magnet currents}
 
 \oguih{Machine Layout}{opageometry}
 
+The layout of the lattice in physical space is shown, by default as seen from top. The geometry as defined by the design orbit is calculated in 3D-space from elements lengths, deflection and rotation angles. Depending on initial conditions, the orbit curve in space is rotated and translated. The elements are made from faces, i.e. polygons in 3D-space, which become polygons in 2D-space when projected to the image plane.
 
-\opamodule{opageometry.pas/.lfm}{(63.2k)}{globlib, linoplib, mathlib, ASaux.}
-This unit displays the lattice layout, peforms geometric matching and exports various files.
-The orbit is calculated in 3D-space from element lengths, deflection and rotation angles \code{>CalcOrbit}. The orbit as curve in space is rotated and translated depending on the initial conditions \code{>setDrawMode}.
-The elements are made from faces, i.e. polygons in 3D-space \code{>CalcFaces}, which become polygons when projected to 2D-space of the image plane \code{>CalcPoly}. Changing the initial conditions does not change the faces themselves but applies the same translationa and rotation to all of them \code{>TransPoly}.
+Several files can be exported, among them a \code{.geo} file of polygons, which can also be read again in order to show several lattice structures in one plot (e.g. ring with transfer lines).
 
-\todo{Up to now the elements are ``flat'', i.e. represented by a face of some length and width in the midplane. If changing the initial angle, they look ugly. It would be straightforward to define boxes made from several faces, however this would also require some rendering algorithm for 3D-display.}
-
-Several files can be exported, among them a \code{.geo} file of polygons \code{>butListClick}, which can also be read \code{>ReadFiles} in order to show several lattice structures in one plot.
-
-Geometric matching looks for lattice variables with names starting with ``G'', which control lengths and deflection or rotation angles of elements (in \code{>Start}) and runs an SVD minimizer to adjust the final (or initial) coordinates and angles of the lattice structure to a target value \code{>butMatchClick}.
-
-\todo{Geometric matching works but is not well implemented yet. More checks are required, and also an ``undo'' button should be added.}
+Geometric matching is used to exactly close a ring or to adjust the final position and angle of a transfer line. For that purpose the lattice should contain variables with names starting with the letter ``G'', which control lengths and deflection or rotation angles of elements. Then an SVD optimizer is used to adjust the final (or initial) coordinates and angles of the lattice structure to given target values.
 
 
+The GUI contains plot window \guico{geo} to show the machine layout, panel \guico{PanParam} with a table to define how elements are shown in the plot, panel \guico{PanGeo} for initial and final position data and panel \guico{PanMat} to control geometric matching.
+
+
+
+
+\todo{Unfortunately this unit is still incomplete and buggy, nevertheless it is quite useful. Following measures need to be adressed for improvement and completion:
+\begin{itemize}
+\item Mouse actions to zoom to a region of interest work well in the Windows version but not in the Linux version. Reasons are not yet understood, probably related to different event handling.
+\item Geometric matching works but is not well implemented yet. More checks are required. Also an ``undo'' button should be added.
+\item Up to now the elements are ``flat'', i.e. represented by a face of some length and width in the midplane. When changing initial conditions from top to side view, they look ugly. It would be straightforward to define bodies composed from top and side faces, however this would also require some rendering algorithm for 3D-display which may be beyond the scope of OPA~-- instead, the data export to CAD programs may be used.
+\item All calculations are presently done in the GUI, which is bad practice. Calculations should be extracted and moved to a new unit \code{geolib}.
+\end{itemize}
+}
+
+
+\uses{\ouni{globlib}, \ouni{linoplib}, \ouni{mathlib}, \ouni{../com/asaux}}
+
+\ppro{
+\guico{Start} at first passes a handle to the GUI to the embedded \oguif{../com/asfigure} frame \guico{geo} in order to later react to mouse events in the plot window. Then it reads defaults and creates dynamically all required GUI components. Variables for geometric matching are allocated and corresponding components are created. Then \prcod{globlib}{GirderSetup} is called to calculate girder parameters. Then a first geometric plot is generated calling this sequence of private procedures: \\
+\guico{CalcOrbit} calculates the orbit in 3D-space, i.e. the location and orientation of all elements starting from a zero position and direction. These data are saved in array \guico{midpt}, and later variations of initial conditions don't require re-calculations but only transformations. \\
+\guico{CalcFaces} calculates the faces of a body in 3D-space representing a lattice element. Data include the array \guico{vpt} of corner points and the array \guico{face} listing the face properties and where to start and end reading points from the corner point array. \todo{As mentioned, presently only one face in the element midplane is used, extension to front and side faces would be straigtforward.}\\
+\guico{CalcPoly} calculates 2D-polygons (arrays \guico{ptx,pty}) for plotting from the faces in 3D-space using the current imaging options like observer location and direction of view \todo{(incomplete)}.\\
+\guico{MakePlot} finally plots the 2D-polygons and additional data to the screen. Before, the plot range is set based on the current zoom options.
+}
+
+
+\act{}
+\evcodx{arrow buttons}{but(Left,Right,Up,Down,SForward,SBackward,ZoomFull)Click} select the view by shifting, by following the lattice or by returning to full view. Further marking a rectangle with the mouse selects a region of interest (see \oguif{../com/asfigure}, \todo{BUG: does not work in the linux version}).
+
+\evcodx{geo.p repaint}{geopPaint}: an \code{OnPaint} for the paintbox object \guifco{p} inside \guifco{geo} calls \ogui{MakePlot} to update the plot. \todo{Probably the malfunction in the linux version is related to that~-- to be explored.}
+
+\evcod{show Orbit}{chkOrbitClick} overplots the orbit.
+
+\evcod{fix aspect ratio}{chkAspratClick} fixes the aspect ratio to have same scales horizontal and vertical (true by default).
+
+\evcodx{parameter table}{GridParamKeyPressed} reads data how to show the various lattice elements from the paramter grid at left and updates the plot.
+
+\evcod{$\longrightarrow$Data}{butListClick} exports several text files with geometry data. Most important is \code{\_geo.txt} containing the polygons of the plot. The other files \code{\_(pos,mpo,holy,srad).txt} export element positions and parameters in various formats for postprocessing by other codes. \todo{These are of historical or SLS-specific origin and may be adapted as needed.}
+
+\evcod{$\longleftarrow$Data}{butListClick} opens a dialog to select polygon files (\code{$\ast$\_geo.txt}) and add the polygons to the plot. This is useful to overplot various lattices, for example booster, transfer line and storage ring.
+
+\evcod{Mode (cen,ini,fin)}{rbdrawClick} enables/disables the edit fields at left for initial and final position depending on the mode of calculation, which is from start or end of latice, or centering provided there are markers with reserved name \code{CENTER} in the lattice.\\[1ex]
+
+If geometric matching is possible, i.e. the panel \guico{PanMat} is visible listing simple variables with names starting with the latter~``G'', then check boxes for geometric matching are enabled to select target values and knobs, and following actions become available:
+
+\evcod{check boxes}{chkg\_Click, chkgvar\_Click} select target fields and knobs (i.e. variables) and enable the matching button \ofld{match} if there are at least as many kobs as targets.
+
+\evcod{actual}{butGoalClick} switches the button caption to \ofld{target} and highlights the checked edit fields for positions and angles to enter target values. Pressing the button again switches back to the actual values.
+
+\evcod{match}{butMatClick} performs the geometric matching: it calculates a sensitivity matrix how the target values react on the knobs, starts an SVD-procedure calling \prcod{mathlib}{svdcmp,svbksb} and updates the plot. If the fit fails, values are reset, otherwise they are updated. \todo{An ``undo'' button should be added to be able to reject the solution}.\\[1ex]
+
+\evcod{Exit}{butExClick} saves the user settings and closes the GUI.
 
 
 \oguih{Magnet currents}{opacurrents}

@@ -86,7 +86,7 @@
 \fboxsep1pt
 
 \parbox[t]{0.7\hsize}{
-  {\Huge\bf OPA documentation} version {\bf 4.2.3}\\
+  {\Huge\bf OPA documentation} version {\bf 4.2.4}\\
   Andreas Streun, \today
 } \hfill  \includegraphics{opalogo_small.jpg}
 \rule{\hsize}{1pt}
@@ -117,8 +117,8 @@ Questions may be adressed to the author at \url{mailto:psi@andreas-streun.de}.
 Following semantic versioning \cite{semver} version 4.063 of OPA was renamed 4.1.0. However, since up to now only the author worked on the code, the distinctions MAJOR, MINOR, PATCH rather refer to the changes as visible to the users than to the API. 
 
 
-Current version is OPA 4.2.3. It includes 44 Pascal units \code{.pas}, 29 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 15 of them are Pascal \opauni{units}. Four of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
-Table~\ref{tabover} lists the units. The column "Size" lists the lines of code as a rough estimate for the complexity of the unit. Furthermore, OPA includes the main program file \ouni{opa.lpr} and a couple of image files \code{.ico, .bmp} to draw symbols on buttons. 
+In version 4.2.4 OPA includes 44 Pascal units \code{.pas}, 29 of them are \opagui{GUIs} which are accompanied by a Lazarus form \code{.lfm} (created by the Lazarus IDE), and 15 of them are Pascal \opauni{units}. Four of the GUIs are \opaguif{frames}, i.e. self-defined components embedded in other GUIs. Four units are located in a parallel folder, here called \code{../com/} since they are not OPA specific but used with other programs too.
+Table~\ref{tabover} lists the units. The column "Size" lists the lines of code as a rough estimate for the complexity of the unit. Furthermore, OPA includes the main program file \ouni{{opa.lpr}} and a couple of image files \code{.ico, .bmp} to draw symbols on buttons. 
 
 A GUI defines a class, given in table~\ref{tabover} in the column "class". The actual GUI is the one and only instance of this class, i.e. a public variable, usually with the name as the class but without the leading "T". A frame also defines a class but no instance, instead the parent GUI will define one or more instances of this class as variables. A standard Pascal unit may also define a class to be instantiated, or it is a library, i.e. a collection of variables and public procedures.
 
@@ -231,7 +231,8 @@ Type \unico{ElementType} is a case-record for defining element parameters, and t
 All elements have length, aperture and a rotation angle (roll) and a type. Furthermore a pointer may give a list of real names for machine control (optionally used for geometry data output, \ogui{opageometry} and exporting power supply currents, \ogui{opacurrents}). 
 
 Depending on type different parameters are defined in tables \ref{tabel2} and \ref{tabel1}. Columns "in file" and "in record" refer to the keywords to be set in the lattice text file and the corresponding field in the \unico{ElementType} record. An asterisk after a field name like \unico{l*} indicates, that an arithmetic expression is allowed too, which refers to a field of same name with suffix \code{\_exp}, in this case \unico{l\_exp}. It contains a pointer to a string with the expression making use of variables (see unit \ouni{globlib} code for details). 
-The column "unit" refers to the physical unit to be given in the file. Internally all values are SI-units \todo{CORRECT???}. The column "note" refers to these comments:
+The column "unit" refers to the physical unit to be given in the file. Internally all values are SI-units. % \todo{CORRECT???}. 
+The column "note" refers to these comments:
 
 \begin{table}
 \caption{\label{tabel2}Element description, part I}\vspace{1em}
@@ -347,7 +348,7 @@ d) Positive deflection is towards the ring center, i.e. in $-x$-direction and th
 
 e) $K_1$ is the fringe field parameter defined by Brown (see \cite{inside}: elements/on-axis). If only {\tt K1} is given in the lattice, the same parameters is applied to both edges. 
 
-f) ``Bending'' and ``Combined'' are almost identical, except that ``Combined'' allows a sextupole component. This has historical reasons. \todo{to be merged in one element.}
+f) ``Bending'' and ``Combined'' are almost identical, except that ``Combined'' allows a sextupole component. This has historical reasons~-- \todo{to be merged in one element.}
 
 g) Multipole definition includes the factorial, i.e. $b_n = \frac{p}{e}\frac{1}{(n-1)!}\frac{d B^{(n-1)}_y}{d x^{n-1}}$
 
@@ -377,7 +378,8 @@ s) Presently photon beam is only used for plotting x-ray beams in the geometry l
 
 t) Simple marker and beam rotation don't have additional parameters.\\
 
-Furthermore, not listed in the table, the element record contains a field \unico{nl} of type \unico{NameListType} which is a linked containing real element names, power supply names and information on polarity and family topology. These data are defined in additional files defined by the keywords {\tt ALLOCATION} and {\tt CALIBRATION} in the lattice file. Unit \ouni{latfilelib}, reads and assigns these data. Unit \ogui{opacurrents} exports these data including calculated currents and more to the control system, and unit \ogui{opageometry} exports list of real names and geo data.
+
+\label{namelist}Furthermore, not listed in the table, the element record contains a field \unico{nl} of type \unico{NameListType} which is a linked containing real element names, power supply names and information on polarity and family topology. These data are defined in additional files defined by the keywords {\tt ALLOCATION} and {\tt CALIBRATION} in the lattice file. Unit \ouni{latfilelib}, reads and assigns these data. Unit \ogui{opacurrents} exports these data including calculated currents and more to the control system, and unit \ogui{opageometry} exports list of real names and geo data.
 
 However, for correctors (dipoles and monitors, skew and regular quads) with reserved names in the lattice file, the namelist is used to generate individual corrector names in the \unico{Ella} array of used elements to adress them in orbit correction, unit \ogui{opaorbit}.
 
@@ -2140,17 +2142,14 @@ The procedures in the last third of the unit are for signal processing, to calcu
 
 \oguih{Machine Layout}{opageometry}
 
+\desc{
 The layout of the lattice in physical space is shown, by default as seen from top. The geometry as defined by the design orbit is calculated in 3D-space from elements lengths, deflection and rotation angles. Depending on initial conditions, the orbit curve in space is rotated and translated. The elements are made from faces, i.e. polygons in 3D-space, which become polygons in 2D-space when projected to the image plane.
 
 Several files can be exported, among them a \code{.geo} file of polygons, which can also be read again in order to show several lattice structures in one plot (e.g. ring with transfer lines).
 
 Geometric matching is used to exactly close a ring or to adjust the final position and angle of a transfer line. For that purpose the lattice should contain variables with names starting with the letter ``G'', which control lengths and deflection or rotation angles of elements. Then an SVD optimizer is used to adjust the final (or initial) coordinates and angles of the lattice structure to given target values.
 
-
 The GUI contains plot window \guico{geo} to show the machine layout, panel \guico{PanParam} with a table to define how elements are shown in the plot, panel \guico{PanGeo} for initial and final position data and panel \guico{PanMat} to control geometric matching.
-
-
-
 
 \todo{Unfortunately this unit is still incomplete and buggy, nevertheless it is quite useful. Following measures need to be adressed for improvement and completion:
 \begin{itemize}
@@ -2160,7 +2159,7 @@ The GUI contains plot window \guico{geo} to show the machine layout, panel \guic
 \item All calculations are presently done in the GUI, which is bad practice. Calculations should be extracted and moved to a new unit \code{geolib}.
 \end{itemize}
 }
-
+}
 
 \uses{\ouni{globlib}, \ouni{linoplib}, \ouni{mathlib}, \ouni{../com/asaux}}
 
@@ -2176,7 +2175,7 @@ The GUI contains plot window \guico{geo} to show the machine layout, panel \guic
 \act{}
 \evcodx{arrow buttons}{but(Left,Right,Up,Down,SForward,SBackward,ZoomFull)Click} select the view by shifting, by following the lattice or by returning to full view. Further marking a rectangle with the mouse selects a region of interest (see \oguif{../com/asfigure}, \todo{BUG: does not work in the linux version}).
 
-\evcodx{geo.p repaint}{geopPaint}: an \code{OnPaint} for the paintbox object \guifco{p} inside \guifco{geo} calls \ogui{MakePlot} to update the plot. \todo{Probably the malfunction in the linux version is related to that~-- to be explored.}
+\evcodx{geo.p repaint}{geopPaint}: an \code{OnPaint} for the paintbox object \guifco{p} inside \guifco{geo} calls \guico{MakePlot} to update the plot. \todo{Probably the malfunction in the linux version is related to that~-- to be explored.}
 
 \evcod{show Orbit}{chkOrbitClick} overplots the orbit.
 
@@ -2203,31 +2202,35 @@ If geometric matching is possible, i.e. the panel \guico{PanMat} is visible list
 
 \oguih{Magnet currents}{opacurrents}
 
-\unico{getKfromI, getdKdIfac, getIfromK} convert  magnet strength in current and vice versa taking into account non-linear magnet saturation.
+\desc{This GUI was made for exporting lattice data to the EPICS control system of the SLS\footnote{The first SLS, operating 2000-2023}: Magnet strengths are converted to power supply currents and local current gradients taking into account the nonlinearity of the magnets due to saturation. Furthermore the elements of $2\times 2$ matrices for shifting tunes and chromaticities as calculated by \ogui{otunematrix} and \ogui{opachroma} are exported. 
 
-\opamodule{opacurrents.pas/.lfm}{(10.3k)}{globlib, ASaux.}
-This unit calculates magnet currents using two tables for allocation (i.e. hardware type of the magnet in the lattice) and magnet calibration, which may be read with the lattice in \code{globlib> ReadAllocation, ReadCalibration}. Calculating the current from the strength parameters and v.v. is done in \code{globlib> getIfromK, getKfromI}. Due to non-linearity of the calibration curve, a bisection root finder is used \cite{numrec}.
+Data are exported to an EPICS  \code{.snap} file which is rather SLS-specific, however features like current calculation may be of general interest. In order to do so, additional files for magnet allocations, listing the magnet types of lattice elements, and for calibration, listing the coefficients of the characteristic hysteresis curve, have to be provided (see unit \ouni{latfilelib}). Coefficients are explained in the comments section of procedure \guico{getKfromI}. Example files for SLS are provided with this document as \code{sls\_currents.zip}. 
+}
 
-The {\tt opacurrents} unit provides a GUI and writes a {\tt .snap} file to be read by the storage ring control system. Among other data, this file also includes the matrices for tune change, if previously calculated by \code{otunematrix}, and for chromaticity change, calculated by \code{chromlib> UpdateChromMatrix}.
+\uses{\ouni{globlib}, \ouni{mathlib}, \ouni{../com/asaux}}
 
-\todo{The current calculation should be done here, not in {\tt globlib}.}\\
+\ppro{
+\guico{Start} already performs all current calculations: The used elements in the \unico{Ella} should have an entry in the namelist field (see page \pageref{namelist}) telling about the magnet type. Using the corresponding calibration, procedures  \guico{getIfromK} and \guico{getdIdKfac} calculate the current and the attenuation factor at this current, i.e. the relative reduction of the hysteresis slope. This is performed by a root finder iterating on the reverse function \guico{getKfromI}. Polarity is also taken into account. Power supplies are then listed with number of connected magnets and current in the left table \guico{cgrid}. 
+}
 
 
+\act{
+\evcodx{left table}{cgridSelectCell} shows the individual magnets of the clicked power supply in the right table \guico{pgrid}.
 
+\evcod{SNAP export}{busnapSLSClick} writes the EPICS \code{.snap} file: name of lattice file, beam energy, nominal tunes and chromaticities, and matrices for moving tunes and chromaticities. Then follows a list of X-ray source points with their beta functions (one implemented for pin hole beam size measurements) and finally the list of magnets with current and attenuation factor for current variation.
+}
 
 
 
 
 \ounih{Test procedures}{testcode} 
 
+\desc{This unit is for temporarily needed procedures or for testing new stuff, which then, if it works well, is moved to another place. Habitually, procedures are called when clicking items in brackets in the \ofld{Extra} pulldown menu of \ouni{opamenu}.
+}
 
-\opamodule{testcode.pas}{(37.3k)}{globlib, linoplib, mathlib, ASaux.}
-This unit is for temporarily needed procedures or for testing new stuff, which then, if it works well, is moved to another place.
+\uses{ may vary depending on what to be tested.} 
 
-In the present (\today) version the unit contains, among others, three procedures for reading MAD {\tt .mad}, MAD sequence {\tt .seq} and ELEGANT {\tt .lte} files. The procedures are yet incomplete but nevertheless facilitate reading these files.\\
-
-
-
+\ppro{Procedures are public in order to call them from \ouni{opamenu}.}
 
 
 

@@ -1,5 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \textwidth 17cm
 \oddsidemargin -0.54cm  %2cm Rand links
 \topmargin 0.46cm %3cm Rand oben
@@ -43,19 +44,22 @@
 \begin{document}\noindent
 
 \parbox[t]{0.7\hsize}{
-  {\Huge\bf inside OPA} version {\bf 4.061}\\
+  {\Huge\bf inside OPA} version {\bf 4.2.4}\\
   Andreas Streun, PSI, \today
 } \hfill  \includegraphics{opalogo_small.jpg}
 \rule{\hsize}{1pt}
+{\small
+\setcounter{tocdepth}{1}
+\tableofcontents
+}
+\pagebreak
 \section{Introduction}
 
-This note documents the beam dynamics algorithms used in and partially developed for OPA during the past decades. It may help OPA users to understand the meaning of the results and the limitations of the models used.
+This note documents the beam dynamics algorithms used in and partially developed for OPA during the past decades. It may help OPA users to understand the meaning of the results and the limitations of the models used. For understanding of the code implementation a documentation is available \cite{opadocu}. In this report \code{unit>procedure} tells where to find the relevant documentation or piece of code. The code itself is available at \url{https://github.com/opa-code/opa-4}.
 
-For programmers who like to further develop or renew OPA, or only want to reuse some piece of the code or an algorithm in other projects, we refer to the relevant units and procedures or functions by \code{Unit> Procedure}-- occasionally some more comment may be found there. A brief description of the OPA units is given in Appendix \ref{appunits}.
 
 The remark \todo{to do\dots} gives suggestions were things could be completed or improved in future.
 
-This note is subject to continuous changes as OPA development proceeds further.
 
 \section{Beam optics}
 
@@ -74,7 +78,7 @@ Linear beam optics at any location in the accelerator in general is fully descri
 Beam parameters along the lattice are calculated by propagating initial parameters.
 In a circular lattice (storage ring), the periodic solutions have to be calculated beforehand to generate the initial parameters.
 
-The closed orbit is the fixpoint of the one-turn map including also kicks from non-linear elements. It is iteratively found by application of the standard Newton-Raphson root finding method using the {\em local} transfer matrix (i.e. the one turn matrix including gradient down feeds from non-linear multipoles) as the Jacobian, i.e. as the gradient for the root finder \code{OpticPlot> ClosedOrbit}.
+The closed orbit is the fixpoint of the one-turn map including also kicks from non-linear elements. It is iteratively found by application of the standard Newton-Raphson root finding method using the {\em local} transfer matrix (i.e. the one turn matrix including gradient down feeds from non-linear multipoles) as the Jacobian, i.e. as the gradient for the root finder \code{linoplib> ClosedOrbit}.
 
 When the orbit is found, the local transfer matrix is used to find the periodic dispersion and the (normal mode) Twiss parameters as described in \cite{SAGAN}:
 The $5\times 5$ one-turn matrix is composed from a the $4\times 4$ transverse focusing matrix $R$ and the 4-vector of dispersion production $\vec{Z}$, with $2\times 2$ sub-matrices non-coupling $M,N$ and coupling $m,n$ and horizontal and vertical 2-vectors of dispersion production $\vec{V}, \vec{w}$:
@@ -139,17 +143,17 @@ The periodic physical dispersion is obtained from
 \vec{D}=R \vec{D}+\vec{Z} \qquad \longrightarrow \qquad \vec{D}=(I-R)^{-1} \vec{Z}.
 \eeq
 
-These procedures are implemented in \code{OpticPlot> Periodic}, switching to \code{>NormalMode} or \code{>FlatPeriodic} with and without coupling.
-When building the lattice, a switch is set to activate coupled calculation if any elements have non-zero rotation angles, or if explicit rotations or solenoids are found \code{OPAGlobal> MakeLattice}. However, later it may happen that the method is changed from uncoupled to coupled due to skew quadrupolar downfeeds in non-linear multipoles from vertical orbit excursions.
+These procedures are implemented in \code{linoplib> Periodic}, switching to \code{>NormalMode} or \code{>FlatPeriodic} with and without coupling.
+When building the lattice, a switch is set to activate coupled calculation if any elements have non-zero rotation angles, or if explicit rotations or solenoids are found \code{globlib> MakeLattice}. However, later it may happen that the method is changed from uncoupled to coupled due to skew quadrupolar downfeeds in non-linear multipoles from vertical orbit excursions.
 
-Alternatively to the periodic solution, a symmetric solution can be calculated as detailed in \cite{wille}, where the alpha-functions at both sides of the lattice are zero but the beta-functions may be unequal \code{OpticPlot> Symmetric}.
+Alternatively to the periodic solution, a symmetric solution can be calculated as detailed in \cite{wille}, where the alpha-functions at both sides of the lattice are zero but the beta-functions may be unequal \code{linoplib> Symmetric}.
 
 \todo{Symmetric solution is only implemented for uncoupled lattice and will give wrong results with coupling: to be extended (or to be dropped, since rarely used)}
 
 \subsection{Propagation}
 As a code for lattice design from scratch it was OPA's aim from the beginning to calculate all lattice parameters, even equilibrium parameters like emittance, by forward propagation irrespective of the existence of a periodic solution. Physically this makes no sense, but it is useful for design tasks, and therefore emphasis was placed on forward (or backward) calculations. Closing the ring to enable the periodic solution may be done as a later step in design from scratch.
 
-In a periodic lattice, initial parameters at one locations are obtained by the procedure as described above. One can calculate them at any location, by just starting and ending the concatenation of the one-turn matrix there. This option is included for cross-checking \code{OpticPlot> PropPer}, however it is slow and it is not the ``OPA spirit''.
+In a periodic lattice, initial parameters at one locations are obtained by the procedure as described above. One can calculate them at any location, by just starting and ending the concatenation of the one-turn matrix there. This option is included for cross-checking \code{linoplib> PropPer}, however it is slow and it is not the ``OPA spirit''.
 Fortunately, Sagan \& Rubin gave a recipe \cite{SAGAN} how to propagate the periodic solution from one location to another.
 In a single pass system, e.g. a transfer line, we anyway have to do forward propagation (of course, in this case equilibrium parameters really make no sense).
 We quote here the relevant equations from \cite{SAGAN}. The transfer matrix from some location ``1'' to another location ``2'' is known (sub-matrices $M,N,m,n$), because it was used for concatenating the one-turn matrix. If the optics parameters at ``1'' are known, they are calculated at ``2'' as follows:
@@ -261,11 +265,11 @@ Therefore, when propagating in flip mode, an intentional mode flip back should b
 
 \todo{The integer part of the tune becomes wrong in some cases with mode flip. It's not yet understood why this happens and how it could be improved.}
 
-These procedures are implemented in \code{OPAElements> Propagate}, branching to \code{>MCC\_prop} with and  \code{>MBD\_prop} without coupling, and using \code{>PhaseAdvance} for the phase advances.
+These procedures are implemented in \code{elemlib> Propagate}, branching to \code{>MCC\_prop} with and  \code{>MBD\_prop} without coupling, and using \code{>PhaseAdvance} for the phase advances.
 
 
 \subsection{Projections}
-The projections of the beta functions to the physical coordinates $x,y$ are derived from the expressions in \cite{SAGAN} \code{OPAElements> GetBeta12}
+The projections of the beta functions to the physical coordinates $x,y$ are derived from the expressions in \cite{SAGAN} \code{elemlib> GetBeta12}
 \begin{eqnarray}
 \beta_{xa}=g^2 \beta_a & \qquad &
 \beta_{xb} = \beta_b \left( \left[ C_{11}^2-C_{12}\frac{\alpha_b}{\beta_b} \right]^2 + \left[ \frac{C_{12}}{\beta_b}\right]^2\right) \\
@@ -274,7 +278,7 @@ The projections of the beta functions to the physical coordinates $x,y$ are deri
 \end{eqnarray}
 Here $\beta_{xa},\, \beta_{yb}$ are the principal modes, which become $\beta_x,\, \beta_y$ without coupling, and $\beta_{xb}$ and $\beta_{ya}$ are the cross-talks from the other transverse plane which disappear without coupling.\\
 
-A normalized normal-mode sigma-matrix $\bar{\sigma}$ has just the normal mode emittances as diagonal elements. The real sigma matrix $\sigma$ in physical quantities is obtained by transformation to local normal mode betas and from normal mode coordinates to real space coordinates \code{OpticPlot> N2SfromOp}:
+A normalized normal-mode sigma-matrix $\bar{\sigma}$ has just the normal mode emittances as diagonal elements. The real sigma matrix $\sigma$ in physical quantities is obtained by transformation to local normal mode betas and from normal mode coordinates to real space coordinates \code{linoplib> N2SfromOp}:
 \beq
 \sigma = \left(\begin{array}{cccc}
 \langle x^2 \rangle & \langle xx' \rangle & \langle xy \rangle & \langle xy' \rangle \\
@@ -295,12 +299,12 @@ The projected emittances in the physical dimensions are given by the determinant
 \beq
 \epsilon_x = \sqrt{\langle x^2 \rangle \langle x'\rangle^2- \langle xy \rangle^2}
 \eeq
-In order to include contributions from energy spread $\sigma_u=\sqrt{\langle u^2 \rangle}$ and dispersion the $4\times 4$ matrices can be extended to $5\times 5$ including dispersions in the fifth column of $T^{-1} {\cal G}^{-1}$ and $\sigma_u^2$ as 5,5-element of the normalized sigma matrix, or the contributions are added explicitly. For visualization of the different contributions to the envelope the equivalent formulation with projected beta functions is preferred \code{OpticPlot> PlotEnv}:
+In order to include contributions from energy spread $\sigma_u=\sqrt{\langle u^2 \rangle}$ and dispersion the $4\times 4$ matrices can be extended to $5\times 5$ including dispersions in the fifth column of $T^{-1} {\cal G}^{-1}$ and $\sigma_u^2$ as 5,5-element of the normalized sigma matrix, or the contributions are added explicitly. For visualization of the different contributions to the envelope the equivalent formulation with projected beta functions is preferred \code{linoplib> PlotEnv}:
 \beq
 \sigma_x=\sqrt{\epsilon_a \beta_{xa} + \epsilon_b \beta_{xb} + (\sigma_u D_x)^2} \qquad
 \sigma_y=\sqrt{\epsilon_b \beta_{yb} + \epsilon_a \beta_{ya} + (\sigma_u D_y)^2}
 \eeq
-Finally, the tilt angle $\theta$ of the beam in the $(x,y)-$plane is given by \code{OpticPlot> FillBetaTab}
+Finally, the tilt angle $\theta$ of the beam in the $(x,y)-$plane is given by \code{linoplib> FillBetaTab}
 \beq
 \tan 2\theta =\frac{ 2 \langle xy \rangle}{\langle x^2 \rangle - \langle y^2 \rangle}
 \eeq
@@ -317,10 +321,11 @@ Orbit correctors are small dipoles to create or correct orbit excursions. Uundul
 
 The $5\times 5$ transfer matrix of a linear magnet in general is given by
 \beq
-R = \left( \begin{array}{cc|c} M & m & \vec{V} \\ n & N & w \\ 0 & 0 & 1 \end{array} \right)
+R = \left( \begin{array}{cc|c} M & m & \vec{V} \\ n & N & \vec{w} \\ 0 & 0 & 1 \end{array} \right)
 \eeq
-with horizontal and vertical $2\times 2$ transfer matrices $M$ and $N$ and the dispersion production 2-vectors $\vec{V}$ and $\vec{w}$ 2-vectors.
-For a regular magnet which does not introduce coupling, the transfer matrix is block-diagonal, i.e. $m=n=0$ and $\vec{w}=0$.\\
+with horizontal and vertical $2\times 2$ transfer matrices $M$ and $N$ and the dispersion production 2-vectors $\vec{V}$ and $\vec{w}$ 2-vectors. 
+For a regular magnet which does not introduce coupling, the transfer matrix is block-diagonal, i.e. $m=n=0$ and $\vec{w}=0$.
+A sixth row and column for pathlength are omitted sine OPA does not contain longitudinal dynamics.\\
 
 \subsection{On-axis}
 
@@ -336,14 +341,14 @@ Introducing the abbreviations
 \eeq
 with the longitudinal coordinate $s$, the sub matrices are given by~\cite{HANDBOOK}
 \beq\label{eq:bendmv}
-M_{\rm SM}  = \left\{
+M  = \left\{
   \begin{array}{c}
     \left( \begin{array}{cc}\cos ps & \frac{\sin ps}{p} \\ -p\sin ps & \cos ps  \end{array}\right) \\
     \left( \begin{array}{cc} 1 & s \\ 0 &  1  \end{array}\right) \\
     \left( \begin{array}{cc}\cosh ps & \frac{\sinh ps}{p} \\  p\sinh ps & \cosh ps \end{array}\right)
   \end{array}\right.
 \qquad
-\vec{V}_{\rm SM}= \left\{
+\vec{V}= \left\{
   \begin{array}{cc}
      \left( \begin{array}{c} \frac{h}{p^2}(1-\cos ps ) \\ \frac{h}{p}\sin ps  \end{array}\right)
        & \mbox{\rm for~} k>-h^2 \\
@@ -355,7 +360,7 @@ M_{\rm SM}  = \left\{
 \eeq
 and $N$ is given by
 \beq\label{eq:bendn}
-N_{\rm SM} = \left\{
+N = \left\{
   \begin{array}{cc}
     \left( \begin{array}{cc}\cos qs & \frac{\sin qs}{q} \\  -q\sin qs & \cos qs \end{array}\right)
       & \mbox{\rm for~} k<0 \\
@@ -365,18 +370,18 @@ N_{\rm SM} = \left\{
       & \mbox{\rm for~} k>0
    \end{array}  \right.
    \qquad
-\vec{w}_{\rm SM}= 0
+\vec{w} = 0
 \eeq
 Here $k=0$ describes a pure dipole, $h=0$ a quadrupole, and for $h=0$ and $k=0$ we recover a drift space.
 Defining $C_p = \cos ps \mbox{~or~} \cosh ps$ and $\bar{S}_p = (\sin ps)/p \mbox{~or~} (\sinh ps)/p$ depending on the sign of $K$, and similar for $q$, we can write in a compact way:
 \beq
 M=\left(\begin{array}{cc} C_p & \bar{S}_p \\ -K \bar{S}_p & C_p \end{array}\right)\qquad
-\vec{V}_{SM}=\left(\begin{array}{c} (1-C_p) h/K \\ h \bar{S}_p \end{array}\right)\qquad
+\vec{V}=\left(\begin{array}{c} (1-C_p) h/K \\ h \bar{S}_p \end{array}\right)\qquad
 N=\left(\begin{array}{cc} C_q & \bar{S}_q \\ k \bar{S}_q & C_q \end{array}\right)
 \eeq
-\code{OPAElements> Drift\_Matrix, Quad\_Matrix, Sector\_Matrix, Bend\_Matrix}
+\code{elemlib> Drift\_Matrix, Quad\_Matrix, Sector\_Matrix, Bend\_Matrix}
 
-For a bending magnet where the entry and exit edges are not perpendicular to the beam direction (e.g. rectangular bend), we need to take the pole face rotations into account by means of thin kick matrices before and after the sector \code{OPAElements> EdgeKick\_Matrix}:
+For a bending magnet where the entry and exit edges are not perpendicular to the beam direction (e.g. rectangular bend), we need to take the pole face rotations into account by means of thin kick matrices before and after the sector \code{elemlib> EdgeKick\_Matrix}:
 :
 \beq
 M = \left( \begin{array}{cc}
@@ -392,15 +397,15 @@ The parameter $\psi$ takes into account a finite extension of the fringe field, 
 \psi = K_1 h g \frac{1+\sin^2\theta}{\cos\theta}\qquad K_1=\int \frac{B_y(s) \left(B_0-B_y(s)\right)}{gB_0^2}\,ds
 \eeq\\
 
-The rotation is a change of coordinate system. For example, a vertical bending magnets would be introduced by a $90\degree$-rotation. It's matrix is given by
+The rotation is a change of coordinate system. For example, a vertical bending magnets would be introduced by a $90\degree$-rotation. The rotation matrix is given by
 \beq
 M = N = \left( \begin{array}{cc} \cos\phi & 0 \\ 0 & \cos\phi \end{array} \right)\qquad
 m = -n = \left( \begin{array}{cc} \sin\phi & 0 \\ 0 & \sin\phi \end{array}  \right)
 \eeq
-with $\phi$ the angle of rotation, \code{OPAElements> Rotation\_Matrix}.
+with $\phi$ the angle of rotation, \code{elemlib> Rotation\_Matrix}.
 
 The solenoid has a longitudinal field and thus is only described correctly by the Hamiltonian of Eq.\ref{ham2}. Using the approximation $B_s=0$ from Sec.\ref{ssechamapp} as implemented in OPA, the treatment is not completely correct. In our simplified framework the solenoid can be modeled as a product of a rotation matrix with a quadrupole-like matrix focusing in both planes.
-With the strength $k= B_s/(2 B\rho)$ and $\phi=kL$ the sub-matrices are \code{OPAElements> Sol\_Matrix}
+With the strength $k= B_s/(2 B\rho)$ and $\phi=kL$ the sub-matrices are \code{elemlib> Sol\_Matrix}
 \beq
 M=N=\left( \begin{array}{cc} \cos^2\phi & \frac{\cos\phi\sin\phi}{k} \\
 -k \cos\phi\sin\phi & \cos^2\phi \end{array} \right)\qquad
@@ -505,7 +510,7 @@ k_rl  & 0 & b_2l &  2 b_3l X & 3 b_4l (X^2-Y^2) \\
 k_sl  & 0 & 0    &  2 b_3l Y & 6 b_4 XY \\
 \end{array}
 \eeq
-The off-axis multipole transfer matrices is \code{OPAElements> ThinSextupole, Multipole}:
+The off-axis multipole transfer matrices is \code{elemlib> ThinSextupole, Multipole}:
 \beq
 R = \left(\begin{array}{ccccc} 1 & 0 & 0 & 0 & 0 \\
                              - k_rl & 1 & k_sl & 0 & -X_o' \\
@@ -516,7 +521,7 @@ R = \left(\begin{array}{ccccc} 1 & 0 & 0 & 0 & 0 \\
 \eeq
 
 \subsection{Other elements}
-{\bf Combined}: The element type ``Combined'' is just a bending magnet. It has deflection angle and focusing strength, but in addition it may have a sextupole moment. Internally it is subdivided in a number of slices with thin sextupoles between \code{OPAElements> Combined}.
+{\bf Combined}: The element type ``Combined'' is just a bending magnet. It has deflection angle and focusing strength, but in addition it may have a sextupole moment. Internally it is subdivided in a number of slices with thin sextupoles between \code{elemlib> Combined}.
 
 \todo{For historical reasons the elements ``Bending'' and ``Combined'' exist in parallel, basically Combined includes Bending, except a second fringe field parameter $K_2$ which actually was never ever used. So these elements may be merged into one.} \\
 
@@ -547,7 +552,7 @@ f_1 = \frac{2}{\pi}=0.637 \qquad f_2 = \frac{1}{2}=0.5000 \qquad f_3 = \frac{4}{
 
 {\bf Kicker}: a kicker is a time-dependent $2n$-pole, in the simplest case ($n=1$) a dipole. It has a time constant, where we assume a half-sine shaped pulse of duration $\tau$, and a delay $\delta$, so its time dependence is
 \[
-f(t) = \cos \pi \frac{t-\delta}{\tau} \quad\mbox{\rm for}\quad -\frac{\tau}{2}<t<\frac{\tau}{2}
+f(t) = \cos \pi \frac{t-\delta}{\tau} \quad\mbox{\rm for}\quad -\frac{\tau}{2}<t-\delta<\frac{\tau}{2}
 \quad \mbox{\rm else}\quad 0
 \]
 OPA has two implementations, a regular multipole and a non-linear kicker of a type as described e.g. in \cite{ATKINSON}. In the latter case a value $\hat{x}$ is given, where the field reaches maximum deflection $\Delta x'$. Then the integrated field (i.e. the actual kick) and the local gradient vary as
@@ -557,7 +562,7 @@ b_2l (x,t) = \Delta x'\, A\, f(t)\, \sin^{n-2}Ax\, \cos Ax
 \eeq
 with $A=\pi/2/\hat x$, for $|x|<2\hat{x}$ and $n\geq 2$. So near the origin this kicker looks like a regular $2n$-pole.
 
-A regular multipole-kicker is identified by $\hat x=0$ and instead the multipole strength is given. Then Eq.~\ref{eq:mpole} applies and is just multiplied with the time dependence $f(t)$ \code{OPAElements> Kicker}, \code{tracklib> TMatKick}.
+A regular multipole-kicker is identified by $\hat x=0$ and instead the multipole strength is given. Then Eq.~\ref{eq:mpole} applies and is just multiplied with the time dependence $f(t)$ \code{elemlib> Kicker}, \code{tracklib> TMatKick}.
 
 
 \section{Radiation integrals}
@@ -584,6 +589,7 @@ I_{5b} = \int \tilvec{D}_b^T (s) \cdot \tilvec{D}_b (s)\, |h(s)|^3\,ds
 C_x (s)  =  h_X(s)\,(|h(s)|^2 + 2k(s) ) \qquad
 C_y (s)  =  h_Y(s)\,(|h(s)|^2 - 2k(s) ) 
 \]
+\rule{\hsize}{1pt}
 \end{table}
 
 
@@ -602,11 +608,11 @@ I_{5[x]} & = & \int {\cal H}_x(s\,)|h(s)|^3 \, ds \qquad I_{5y}=0
 \]
 
 On-axis only the bending magnets contribute to the integrals. Off-axis basically all magnets contribute, but, as discussed in \cite{VZAS}, the non-linear multipoles are negligible.
-Analytic solutions for the integrals in a general bending magnet with constant parameters $h$,$k$ were implemented in earlier versions of OPA, however these equations (generated by an algebraic code), were rather lengthy and not intuitive, further it was not possible to include off-axis contributions. Therefore a semi-numeric implementation was chosen by using a Simpson-integration over the bending magnets. The number of points is estimated from the phase advance over the bending magnet in order to catch variations of the optical functions \code{OPAElements> Bending, Quadrupole}.
+Analytic solutions for the integrals in a general bending magnet with constant parameters $h$,$k$ were implemented in earlier versions of OPA, however these equations (generated by an algebraic code), were rather lengthy and not intuitive, further it was not possible to include off-axis contributions. Therefore a semi-numeric implementation was chosen by using a Simpson-integration over the bending magnets. The number of points is estimated from the phase advance over the bending magnet in order to catch variations of the optical functions \code{elemlib> Bending, Quadrupole}.
 
 The radiation integrals are sums over the contributions from all magnets. If mode-flips occur in the lattice, each flip sets or releases a flag to add the integral contributions crosswise.
 
-Finally the radiation equilibrium parameters are calculated from the integrals \code{OpticPlot> LinOp}
+Finally the radiation equilibrium parameters are calculated from the integrals \code{linoplib> LinOp}
 \begin{eqnarray}
 \mbox{\rm Momentum compaction factor}   \qquad \alpha & = & I_1/C \\
 \mbox{\rm Energy loss per turn [eV]}  \qquad  U_o & = &  C_{\gamma} \gamma^4 I_2 \\
@@ -614,7 +620,7 @@ Finally the radiation equilibrium parameters are calculated from the integrals \
 \mbox{\rm Relative energy spread}  \qquad \sigma_u^2 & = &  C_q\gamma^2\frac{I_3}{I_2 J_u} \\
 \mbox{\rm Normal mode emittances [m]}  \qquad \epsilon_{a,b} & = & C_q\gamma^2\frac{I_{5a,b}}{I_2 J_{a,b}}
 \end{eqnarray}
-with the constants ($\mu_o$ is vacuum permeability) \code{OPAGlobal> OpaInit}
+with the constants ($\mu_o$ is vacuum permeability) \code{globlib> OpaInit}
 \beq
 C_{\gamma}= \frac{ec^2\mu_o}{6\pi} = 9.60\cdot10^{-10} \mbox{Vm} \qquad
 C_q = \frac{55 \hbar}{32 \sqrt{3} m_oc} =3.83\cdot10^{-13} \mbox{m}
@@ -628,7 +634,7 @@ For the first integral, the path length, we need only the dispersion in the dire
 \beq
 \Delta I_{1k} = \int_0^{\lambda/2} D_x h(s)\,ds \approx f_1 \frac{\lambda}{2}\,\langle D_x \rangle \,p_k\,\hat{h}
 \eeq
-For the average of the dispersion and other optical functions we simple use the mean of values before and after the pole, $\langle D \rangle \approx (D_0+D_1)/2$. This neglects the wiggling of the dispersion inside the undulator, which is justified for undulators with small periods as used in low emittance rings. Either the undulator is located in a dispersion free region, than its inner dispersion is too small to have a signficant impact on the first, fourth and fifth integral, or it is located in a dispersive region, but then its inner dispersion is small compared to the outer dispersion.
+For the average of the dispersion and other optical functions we simple use the mean of values before and after the pole, $\langle D \rangle \approx (D_0+D_1)/2$. This neglects the wiggling of the dispersion inside the undulator, which is justified for undulators with small periods as used in low emittance rings. Either the undulator is located in a dispersion free region, than its inner dispersion is too small to have a signficant impact on the first, fourth and fifth integral, or it is located in a dispersive region, but then its inner dispersion oscillation is small compared to the offset from outer dispersion.
 
 The second and third integral do not depend on optical functions and thus are simply given by
 \beq
@@ -655,19 +661,19 @@ ${\cal H}_{a,b} = \tilvec{D}_{a,b}\cdot \tilvec{D}_{a,b}^T$,
 
 \section{Optics calculations}
 
-Once a periodic solution is found, the 17 optics parameters (orbit, normal mode beta functions, dispersions, coupling matrix, and momentum offset) are defined at the begin/end of the lattice and are then propagated along the lattice to each element. Alternatively, the parameters can be given explicitly at the begin (or at any other location of the lattice using an ``optics-marker'' element) to be propagated forward (and/or backwards). Phase advances, chromaticities and radiation integrals are accumulated in propagation \code{OpticPlot> LinOp}.\\
+Once a periodic solution is found, the 17 optics parameters (orbit, normal mode beta functions, dispersions, coupling matrix, and momentum offset) are defined at the begin/end of the lattice and are then propagated along the lattice to each element. Alternatively, the parameters can be given explicitly at the begin (or at any other location of the lattice using an ``optics-marker'' element) to be propagated forward (and/or backwards). Phase advances, chromaticities and radiation integrals are accumulated in propagation \code{linoplib> LinOp}.\\
 
-As an interactive design tool OPA emphasizes visualization by resolving the optics {\em inside} the elements. Zoom functions allow the optical functions and the length scale to be magnified, for example to visualize the wiggling dispersion inside an undulator. Elements are subdivided in slices of a maximum length corresponding to one pixel on the screen \code{OpticView> TOptic.Zoom}, and matrices are calculated for the slices and also for the skipped part of the element outside the plot window \code{OPAElements> SliceSet \mbox{\rm etc.}}. If an element is rotated, e.g. a skew quadrupole, the rotations are applied to each slice to show the optical functions in the original coordinate systems, otherwise each rotation would cause a discontinuity in the plot (of course, explicit rotations can be entered as well to do this). Furthermore, a 45\degree-rotation corresponds to a massive coupling and may cause a mode-flip, whereas a (weak) skew quadrupole represented by a quadrupole sandwiched between $\pm 45$\degree\-rotations may cause only moderate coupling.\\
+As an interactive design tool OPA emphasizes visualization by resolving the optics {\em inside} the elements. Zoom functions allow the optical functions and the length scale to be magnified, for example to visualize the wiggling dispersion inside an undulator. Elements are subdivided in slices of a maximum length corresponding to one pixel on the screen \code{opalinop> TOptic.Zoom}, and matrices are calculated for the slices and also for the skipped part of the element outside the plot window \code{elemlib> SliceSet \mbox{\rm etc.}}. If an element is rotated, e.g. a skew quadrupole, the rotations are applied to each slice to show the optical functions in the original coordinate systems, otherwise each rotation would cause a discontinuity in the plot (of course, explicit rotations can be entered as well to do this). Furthermore, a 45\degree-rotation corresponds to a massive coupling and may cause a mode-flip, whereas a (weak) skew quadrupole represented by a quadrupole sandwiched between $\pm 45$\degree\-rotations may cause only moderate coupling.\\
 
-Matching of optical functions from one point to another is an important feature when building a lattice: functions at a final location, and if needed, also at an intermediate location, may be selected, target values are entered, and a couple of ``knobs'' is selected, which can be focusing strengths of elements, lengths of drift spaces or variables in order to build ``super-knobs''. Of course, the number of knobs has to be as large or larger than the number of target functions. The minimizer then establishes a sensitivity matrix and uses the most efficient knobs to set up a linear system, which is solved by LU-decomposition. The procedure thus corresponds to a Newton-Raphson minimization using the sensitivity matrix as Jacobian (like the closed orbit finder) and converges quadratically. However, due to the non-linearity of the problem it may not converge if it starts too far away from the target values, then a manual pre-matching should be done (which is also useful to understand the problem\dots ) or the step size has to be reduced to make convergence more robust on the expense of speed \code{OpticMatch> TMatch.Step}.
+Matching of optical functions from one point to another is an important feature when building a lattice: functions at a final location, and if needed, also at an intermediate location, may be selected, target values are entered, and a couple of ``knobs'' is selected, which can be focusing strengths of elements, lengths of drift spaces or variables in order to build ``super-knobs''. Of course, the number of knobs has to be as large or larger than the number of target functions. The minimizer then establishes a sensitivity matrix and uses the most efficient knobs to set up a linear system, which is solved by LU-decomposition. The procedure thus corresponds to a Newton-Raphson minimization using the sensitivity matrix as Jacobian (like the closed orbit finder) and converges quadratically. However, due to the non-linearity of the problem it may not converge if it starts too far away from the target values, then a manual pre-matching should be done (which is also useful to understand the problem\dots ) or the step size has to be reduced to make convergence more robust on the expense of speed \code{omatching> TMatch.Step}.
 
-\todo{The matching module is one of the eldest part of OPA from MS-DOS-times with 640K RAM limit. Coupling is not included, i.e. it works only for flat lattices. A more powerful and flexible optimizer should be implemented which also includes range limits for the knobs.} \\
+\todo{The matching module is one of the eldest part of OPA. Coupling is not included, i.e. it works only for flat lattices. A more powerful and flexible optimizer should be implemented which also may include range limits for the knobs.} \\
 
-Momentum dependence of the solutions is studied by a series of calculations for different momentum offsets and several parameters can be plotted and fitted by polynomials \code{MomentumLib> Calculate}. If path length was selected the polynomial coefficients corresponding to the orders of the momentum compaction factor are saved internally \code{MomentumLib> MakePlot> fit\_and\_plot} and can be used to calculate and draw the bucket \code{Bucket> TBucketView.CalcBucket}. The calculations to get fixpoints and separatrix are explained in appendix~\ref{appbucket}. However, OPA does not contain longitudinal dynamics. The bucket is only used for visualization and estimation of momentum acceptance.\\
+Momentum dependence of the solutions is studied by a series of calculations for different momentum offsets and several parameters can be plotted and fitted by polynomials \code{momentumlib> Calculate}. If path length was selected the polynomial coefficients corresponding to the orders of the momentum compaction factor are saved internally \code{momentumlib> MakePlot> fit\_and\_plot} and can be used to calculate and draw the bucket \code{opabucket> CalcBucket}. The calculations to get fixpoints and separatrix are explained in appendix~\ref{appbucket}. However, OPA does not contain longitudinal dynamics. The bucket is only used for visualization and estimation of momentum acceptance and bunch length.\\
 
-If a periodic solution is found, a tune-diagram shows the working point and the resonances in its vicinity \code{OPAtune}. After a momentum scan, the resulting chromatic tune footprint is shown in the diagram. Other modules also will plot their results in the tune diagram (see below).\\
+If a periodic solution is found, a tune-diagram shows the working point and the resonances in its vicinity \code{opatune}. After a momentum scan, the resulting chromatic tune footprint is shown in the diagram. Other modules also will plot their results in the tune diagram (see below).\\
 
-In order to shift the working smoothly by small amounts, a $2\times 2$ sensitivity matrix can be set up, which connects the tune shifts to a scaling factor for the two groups of horizontally and vertically focusing quadrupoles \code{OpticTune}.
+In order to shift the working smoothly by small amounts, a $2\times 2$ sensitivity matrix can be set up, which connects the tune shifts to a scaling factor for the two groups of horizontally and vertically focusing quadrupoles \code{otunematrix}.
 
 
 \section{Non-linear optimization}
@@ -681,7 +687,7 @@ where the sum is over all (thin) sextupole kicks. Second orders are more complic
 
 OPA includes the 10 first order sextupole terms (2 linear  chromaticities
 and 8 resonances) and 13 second order sextupole, first order octupole terms (2 quadratic chromaticities, 3 amplitude dependant tune shifts (ADTS) and 8 octupolar resonances). Decapoles are only considered with regard to cubic chromaticity. For the resonances, the modes and their complex conjugates are considered as one term.
-Linear, quadratic and cubic chromaticities are calculated by numeric differentiation \code{ChromLib> ChromDiff} whereas all other quantities are calculated analytically \code{ChromLib> DriveTerms}.
+Linear, quadratic and cubic chromaticities are calculated by numeric differentiation \code{chromlib> ChromDiff} whereas all other quantities are calculated analytically \code{chromlib> DriveTerms}.
 
 The {\em effective} Hamiltonian is obtained by multiplication of the modes with betatron amplitudes. The $n$-th order is
 \[
@@ -702,7 +708,7 @@ For optimization of the sextupole pattern, a penalty function is constructed, wh
 \beq\label{eqpenal}
 P = \sum_{jklmp} \left( \omega_{jklmp} \, A_{jklm}, \delta^p \, |h_{jklmp}   -t_{jklmp}| \right)^2\, + \, P_o
 \eeq
-where the amplitude factor is given as \code{ChromLib> HamScaling}.
+where the amplitude factor is given as \code{chromlib> HamScaling}.
 \[
 A_{jklm}= \frac{j+k+l+m}{2}\cdot \frac{ (2J)_x^{(j+k)/2} (2J_y)^{(l+m)/2}}{\bar J}
 \]
@@ -710,7 +716,7 @@ A_{jklm}= \frac{j+k+l+m}{2}\cdot \frac{ (2J)_x^{(j+k)/2} (2J_y)^{(l+m)/2}}{\bar 
 The factors $\omega_{jklmp}$ are weights manually attached to the corresponding modes.
 %In addition, for the resonant modes a general weighting factor $\Omega_R$ is given to increase their weight, because due to interference they are smaller numbers than the additive, non-resonant terms, but due to resonant amplification they may be  more harmful.
 For the non-resonant modes, where $\Im (h)=0$, a target value
-$t_{jklmp}$ can be given, which is always zero for the resonant modes \code{ChromLib> Penalty}.
+$t_{jklmp}$ can be given, which is always zero for the resonant modes \code{chromlib> Penalty}.
 
 Finally, a term just summing up all sextupole strenghts is added
 \[
@@ -731,23 +737,23 @@ The first order octupole terms form a linear system, which is solved by SVD \cit
 
 
 \section{Tracking}
-Three particle tracking routines are implemented, \code{OPAtrackP} for tracking single particles in phase space, fourier transform and identification of resonances, \code{OPAtrackDA} for evaluating the dynamic apertures, and \code{OPAtrackT} for calculation of Touschek lifetime based on local momentum acceptance obtained from tracking. These programs mainly control the GUI, most of the calculations is done in unit \code{tracklib} uses by all three.
+Three particle tracking routines are implemented, \code{opatrackps} for tracking single particles in phase space, fourier transform and identification of resonances, \code{opatrackda} for evaluating the dynamic apertures, and \code{opatracktt} for calculation of Touschek lifetime based on local momentum acceptance obtained from tracking. These programs mainly control the GUI, most of the calculations is done in unit \code{tracklib} used by all three.
 
 In order to speed up calculations, series of linear elements (between non-linear thin kicks) are concatenated to transfer matrices \code{tracklib> TrackingMatrix}. In tracking the matrices are multiplied to the particle coordinates, and then a non-linear (or time dependent) thin kick is applied \code{tracklib> TMatKick}.
 
 \todo{Particle loss is only checked at the non-linear kick locations, not at peak beta locations, which are usually at quadrupole centers.}
 
-For phase space and dynamic aperture tracking, first the physical acceptance is calculated, i.e. the silhouette from the linear projection of all apertures to the trackpoint as described in Appendix \ref{appgeoa}, \code{tracklib> AmpKappa}, \code{OPAtrackDA> TtrackDA.Silhouette}.
+For phase space and dynamic aperture tracking, first the physical acceptance is calculated, i.e. the silhouette from the linear projection of all apertures to the trackpoint as described in Appendix \ref{appgeoa}, \code{tracklib> AmpKappa}, \code{opatrackda> TtrackDA.Silhouette}.
 For tracking one can select if this acceptance is used as limitation (this would give dynamic aperture including physical limits) or if a manually set aperture is used (this would give the pure dynamic aperture if the set value is sufficiently large). The range for probing aperture or phase space is then set based on this choice \code{tracklib> Acceptances}.
 
-When the reference momentum (momentum of particle to be tracked) is changed, matrix concatenation and physical acceptance has to be redone \code{tracklib> Initdpp}. Dynamic aperture tracking has three modes, $x$ vs. $y$ with optional, fixed $\delta=\Delta p/p$ offset, or $x$ vs. $\delta$, or $y$ vs. $\delta$. The two latter modes require calculation of momentum dependent physical aperture for a specified momentum range \code{tracklib> Acc\_dpp}.
+When the reference momentum (momentum of particle to be tracked) is changed, matrix concatenation and physical acceptance has to be redone \code{tracklib> Initdpp}. Dynamic aperture tracking has four modes, $x$ vs. $y$ with optional, fixed $\delta=\Delta p/p$ offset, or $x$ vs. $\delta$, or $y$ vs. $\delta$ and a 3-d scan $x$ vs. $y$ for a set of momenta. The momentum dependent  modes require calculation of momentum dependent physical aperture for a specified momentum range \code{tracklib> Acc\_dpp}.
 
 Tracking may start at any location, even inside an element. This is in particular important for proper sampling of local momentum aperture in Touschek tracking \code{tracklib> TrackingMatrix, Trackpoint}. In phase space tracking it can be useful to observe the non-linear eigenfigure inside an element.
 
 \todo{This feature is only implemented for phase space and Touschek tracking but not for dynamic aperture tracking (not really needed)}.
 
 \subsection{Phase space tracking}
-Starting coordinates of a particle are given either manually or stepped up when using the ADTS loop \code{OPAtrackP> TtrackP.butTushClick}. After tracking a number of turns (which is a power of 2), a fast Fourier transform (FFT) of the particle coordinates at the trackpoint is calculated \cite{numrec}. Before a sine window is applied, which allows the frequencies to be interpolated, since the peak is known to be of $\sin x/x$ shape, see \cite{jbthesis} and \code{tracklib> FindPeaks} (and procedures called therein).
+Starting coordinates of a particle are given either manually or stepped up when using the ADTS loop \code{opatrackps> TtrackP.butTushClick}. After tracking a number of turns (which is a power of 2), a fast Fourier transform (FFT) of the particle coordinates at the trackpoint is calculated \cite{numrec}. Before a sine window is applied, which allows the frequencies to be interpolated, since the peak is known to be of $\sin x/x$ shape, see \cite{jbthesis} and \code{tracklib> FindPeaks} (and procedures called therein).
 
 The resonances corresponding to the found frequencies are then ``guessed'' using the fact, that the fundamental horizontal tune is subtracted from the frequency in the horizontal spectrum (and v.v. for the vertical spectrum), i.e. a resonance $aQ_x+bQ_y$ is visible at $(a-1)Q_x+bQ_y$ in the horizontal spectrum, and at $aQ_x+(b-1)Q_y$ in the vertical spectrum ~\cite{jbthesis}, \code{tracklib> ResoGuess} (and procedures called therein).
 
@@ -755,81 +761,53 @@ Phase space tracking is also used for injection simulation: a beam ellipse can b
 
 
 \subsection{Dynamic aperture tracking}
-Probing dynamic aperture proceeds by a grid, not by binary search, in order to avoid fake large aperture due to trapping the binary search in stable islands. Grid probing is thorough on the expense of computing time, therefore, in order to early see results, the grid is not probed sequentially but refined successively \code{OPAtrackDA> TtrackDA.dagridsetup}.
+There are three methods of probing dynamic aperture: binary serach if fast, but may result in fake large aperture due to trapping the serach in stable islands. Grid probing is thorough on the expense of computing time, therefore, in order to early see results, the grid is not probed sequentially but refined successively \code{opatrackda> TtrackDA.dagridsetup}. Flood fill performs fast by testing the unstable area only until reaching the stable separatrix~\cite{FTTpaper}.
 
 \subsection{Touschek tracking}
 Touschek lifetime is calculated as described in appendix \ref{apptous} by evaluating the integral over bunch dimensions and local momentum aperture.
 
-The Touschek module \code{OPAtrackT} at first serves as a worksheet calculating several parameters based on manual inputs or previous calculations (using bucket and coupling parameters). Touschek lifetime is integrated based on linear momentum acceptance as obtained from RF-acceptance and physical aperture limitations, see Eq.\ref{toudeltal}. However, linear calculations only consider horizontal apertures assuming that there is pure horizontal dispersion. Coupling effects are only included as vertical emittance affects the scattering rate.
+The Touschek module \code{opatracktt} at first serves as a worksheet calculating several parameters based on manual inputs or previous calculations (using bucket and coupling parameters). Touschek lifetime is integrated based on linear momentum acceptance as obtained from RF-acceptance and physical aperture limitations, see Eq.\ref{toudeltal}. However, linear calculations only consider horizontal apertures assuming that there is pure horizontal dispersion. Coupling effects are only included as vertical emittance affects the scattering rate.
 Coulomb lifetime is calculated too by the simple average of Eq.\ref{tauelopa}. It assumes an elliptical beam pipe and takes into account both apertures. Bremsstrahlung lifetime is closely related to Touschek lifetime since it also depends on momentum acceptance, see Eq.\ref{taubrems}.
 
-In a second step local momentum acceptance is calculated from tracking and binary search. Touschek scattered particles start on-axis with a sudden momentum offset. Synchrotron oscillations are not yet included, i.e. the momentum is assumed to be fixed. Coupling is included, since it will affect the momentum acceptance found in tracking. Touschek and bremsstrahlung lifetime are then recalculated using the tracked momentum acceptance.
+In a second step local momentum acceptance is calculated from tracking. Synchrotron oscillations are not yet included, i.e. the momentum is assumed to be fixed. There are two methods: 
 
-\todo{There is an improvised 5-D tracking option, varying the momentum deviation
+In the classical mode Touschek scattered particles start on-axis with a sudden momentum offset from sufficiently densely sampled lattice locations and are tracked for a given number of turns or until they are lost. Binary search on momentum offset gives the local momentum acceptance.Coupling is included, since it will affect the momentum acceptance found in tracking.
+
+In the ``Fast Touschek Tracking'' mode (FTT), the 3-d $(x,y,\delta)$ volume has to be calculated previously in dynamic aperture. Then Touschek scattered particles are only tracked to the trackpoint, usually begin/end of lattice, and tested to be inside the volume. For details and limitations of this method see \cite{FTTpaper}.
+
+Touschek and bremsstrahlung lifetime are then recalculated using the tracked momentum acceptance.
+
+\todo{As a third mode, there is an improvised 5-D tracking option, varying the momentum deviation
 in turn $k$ simply as $\delta_k = \delta_o \cos (2\pi \nu_s k)$, with $\nu_s$ the
-synchrotron tune. However, implementation of true synchrotron oscillations would be straightforward using cavity parameters set for the bucket. However, setting up the tracking matrix for changed momentum in every turn as implemented now is inefficient and very slow.}
+synchrotron tune. However, implementation of true synchrotron oscillations would be straightforward using cavity parameters set for the bucket. But setting up the tracking matrix for changed momentum in every turn as implemented now is inefficient and very slow.}
 
 \todo{Coulomb scattering only includes physical apertures and should be extended by re-using results from previous dynamic aperture calculations or by including a binary search for maximum deflection angle before starting. Furthermore, pressure profiles may be imported instead of assuming a constant pressure.}
 
 \todo{Including misalignments in tracking has been started defining a concatenated misalignment vector to be applied with the concatenated tracking matrix, but this does not work well yet. Work is in progress.}
 
 \section{Orbit correction}
-The module \code{OPAorbit} implements a standard orbit correction method as used in many other lattice codes too: misalignments are applied to the elements, the closed orbit is calculated, the response matrix is established, how correctors affect the orbit as recorded at the BPMs, and ``inverted'' using SVD \cite{numrec} in order to set the correctors and minimize or zero the orbit at the BPMs.
+The module \code{opaorbit} implements a standard orbit correction method as used in many other lattice codes too: misalignments are applied to the elements, the closed orbit is calculated, the response matrix is established, how correctors affect the orbit as recorded at the BPMs, and ``inverted'' using SVD \cite{numrec} in order to set the correctors and minimize or zero the orbit at the BPMs.
 
-Assuming that elements are mounted to girder, correlated misalignments are set in a hierarchical manner distinguishing between girder absolute errors, girder-to-girder errors and element-to-girder errors. The girder structure is established by assigning each element to a ``parent'' girder and calculating its location on the girder. In the process compound elements, for example a magnet containing thin non-linear multipoles, are identified by checking for zero spaces between adjacent elements, and treated as rigid bodies to assign correlated misalignments, \code{OPAglobal> GirderSetup}.
-The response matrix is calculated for the ideal lattice \code{OPAorbit> GetResponseMatrix} and decomposed.
-After application of misalignments \code{OPAorbit> Torbit.setMisalignments} the periodic closed orbit is searched \code{OpticPlot> ClosedOrbit} and corrected \code{OPAorbit> TOrbit.orbitCorrection}.
+Assuming that elements are mounted to girder, correlated misalignments are set in a hierarchical manner distinguishing between girder absolute errors, girder-to-girder errors and element-to-girder errors. The girder structure is established by assigning each element to a ``parent'' girder and calculating its location on the girder. In the process compound elements, for example a magnet containing thin non-linear multipoles, are identified by checking for zero spaces between adjacent elements, and treated as rigid bodies to assign correlated misalignments, \code{globlib> GirderSetup}.
+The response matrix is calculated for the ideal lattice \code{opaorbit> GetResponseMatrix} and decomposed.
+After application of misalignments \code{opaorbit> Torbit.setMisalignments} the periodic closed orbit is searched \code{linoplib> ClosedOrbit} and corrected \code{opaorbit> TOrbit.orbitCorrection}.
 
-There are more features to run a loop over many error seeds \code{OPAorbit> TOrbit.LoopAction}, to get statistical data \code{OPAorbit> TOrbit.CodStat}, and to plot orbit, corrector values and misalignments.
+There are more features to run a loop over many error seeds \code{opaorbit> TOrbit.LoopAction}, to get statistical data \code{opaorbit> TOrbit.CodStat}, and to plot orbit, corrector values and misalignments.
 
 \section{Injection}
 
 Calculation of an injected beam trajectory is closely related to orbit correction, since a kicker is a time-dependent corrector, which however may not be just a dipole in case of a multipole kicker.
-Kickers are synchronized by adjusting their delays to the distance from the point of injection, which usually is the start of the lattice structure, \code{OPAorbit> TOrbit.ButSyncClick}. Calculation then is done in single pass mode not periodic, of course, starting from manually set injected beam offsets and angles.
-Tracking of an injected beam ellipse is done in the phase space tracking module, \code{OPAtrackP> TtrackP.StartEnsemble, ButBeamRunClick}.
+Kickers are synchronized by adjusting their delays to the distance from the point of injection, which usually is the start of the lattice structure, \code{opaorbit> TOrbit.ButSyncClick}. Calculation then is done in single pass mode not periodic, of course, starting from manually set injected beam offsets and angles.
+Tracking of an injected beam ellipse is done in the phase space tracking module, \code{opatrackps> TtrackP.StartEnsemble, ButBeamRunClick}.
 
-\section{GeoPlot}
-Module \code{OPAGeometry} shows the geometrical layout of the lattice. Presently the elements are only plotted as flat polygons. Geometric matching is performed by an SVD procedure using length and angle variables in order to adjust the lattice structure to a target position and angle \code{OPAGeometry> TGeometry.ButMatchClick}. Files of geometric data can be exported and also imported to overplot different lattices.
+\section{Geometry Plot}
+Module \code{opageometry} shows the geometrical layout of the lattice. Presently the elements are only plotted as flat polygons. Geometric matching is performed by an SVD procedure using length and angle variables in order to adjust the lattice structure to a target position and angle \code{opageometry> TGeometry.ButMatchClick}. Files of geometric data can be exported and also imported to overplot different lattices.
 
 \todo{Up to now the elements are represented at flat faces. Extension to 3D-bodies and 3D-view has been prepared, but is not yet implemented. A hidden surface algorithm would be needed to get a nice 3D-plot, but perhaps this is beyond the scope of OPA.}
 
 \section{LGB optimizer}
-Module \code{LGBEdit} is used to optimize the field profile $B_y(s)$ of a longitudinal gradient bend of given angle, length and maximum field in order to obtain lowest emittance, resp. minimum $I_5$ radiation integral. The magnet is divided in slices, and a non-linear minimizer of Powell type \cite{numrec} sets the field of the slices while maintaining the total field integral, i.e. deflection angle.
+Module \code{opalgbedit} is used to optimize the field profile $B_y(s)$ of a longitudinal gradient bend of given angle, length and maximum field in order to obtain lowest emittance, resp. minimum $I_5$ radiation integral. The magnet is divided in slices, and a non-linear minimizer of Powell type \cite{numrec} sets the field of the slices while maintaining the total field integral, i.e. deflection angle.
 
-\begin{thebibliography}{18}
-\bibitem{VZAS}V. Ziemann and A. Streun, Equilibrium parameters in coupled storage ring lattices and practical applications, Phys. Rev. Accel. Beams, 25, 050703, 2022. \biburl{https://link.aps.org/doi/10.1103/PhysRevAccelBeams.25.050703}.
-\bibitem{cs}E.D.Courant \&\ H.S.Snyder, Theory of the alternating gradient synchrotron, Ann. Phys. 3,1(1958).\\
- \biburl{http://ab-abp-rlc.web.cern.ch/ab-abp-rlc/AP-literature/Courant-Snyder-1958.pdf}
-\bibitem{es}D.A.Edwards \&\ M.J.Syphers, An Introduction to the physics of high energy accelerators, Wiley-VCH, 1992.
-\bibitem{ef}E.Forrest, Beam Dynamics, Harwood Academic Publishers, Amsterdam 1998.
-\bibitem{rees}J.R.Rees, Symplecticity in beam dynamics, SLAC-PUB 9939, 2003.\\
- \biburl{http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-9939.pdf}
-\bibitem{ruth}R.D.Ruth, Single particle dynamics in circular accelerators, SLAC-PUB 4103, 1986.\\
- \biburl{http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-4103.pdf}
-\bibitem{EDTENG} D. Edward and L.Teng, {\em Parametrization of linear coupled motion in periodic
-systems,} IEEE Trans.Nucl.Sci. 20, 885 (1973).
-\bibitem{SAGAN}D. Sagan, D. Rubin, {\em Linear Analysis of coupled lattices,} Physical Review Special
-Topics--Accelerators and Beams 2 (1999) 074001.
-%\bibitem{lgb}A. Streun and A. Wrulich, Compact low emittance light sources based on longitudinal gradient bending magnets, NIM A 770 (2015) 98-112.
-\bibitem{wille}K. Wille, Physik der Teilchenbeschleuniger und Synchrotronstrahlungsquellen, Teubner Studienb\"{u}cher, Stuttgart 1992.
-\bibitem{bruck}H. Bruck, Circular Particle Accelerators, Los Alamos 1966, LA-TR-72-10.
-\bibitem{zap}M. Zisman et al., ZAP user's manual, Berkeley 1986, LBL-21270.
-\bibitem{sls1897}A. Streun, Momentum acceptance and Touschek lifetime, SLS-Note 18/97.
-\bibitem{khan}S. Khan, Simulation of the Touschek effect for Bessy II -- a Monte
-Carlo approach, BESSY-TB 177/93.
-\bibitem{asaa06}\AA. Andersson and A. Streun, Lifetime and acceptance of the SLS storage ring, EPAC-2006, Edinburgh, THPLS060, p.3421.
-\bibitem{jbthesis}J. Bengtsson, Non-linear transverse dynamics, CERN-88-05.
-\bibitem{jbsls}J. Bengtsson, The sextupole scheme for the SLS, SLS-Note 9/97,  \biburl{http://slsbd.psi.ch/pub/slsnotes/sls0997.pdf}
-\bibitem{WANG}Chun-xi Wang, Explicit formulas for 2nd-order driving terms due to sextupoles and chromatic effects of quadrupoles, ANL/APS/LS-330, 2012%, %    \url{https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-sync/lsnotes/files/APS_1429490.pdf}
-\bibitem{SLAS}S. C. Leemann and A. Streun, Perspectives for future light source lattices incorporating yet uncommon magnets, Phys. ST Rev. Accel. Beams, 14, 030701, 2011.
-\bibitem{numrec}W. H. Press et al., Numerical Recipes in Pascal, Cambridge 1989.
-\bibitem{Brown}K. L. Brown, A first- and second-order matrix theory, Stanford 1967, SLAC-75.
-\bibitem{HANDBOOK}A.W.Chao, M.Tigner, Handbook of accelerator physics and engineering, Singapore 1998.
-\bibitem{wiedemann}Wiedemann
-\bibitem{CONRECT}\biburl{http://paulbourke.net/papers/conrec/}
-\bibitem{ATKINSON}T. Atkinson et al., Development of a non-liner kicker system\dots , IPAC-2011, San Sebastian, THPO024, p.3394
-\bibitem{rosetta}\biburl{http://rosettacode.org/wiki/Arithmetic\_Evaluator/Pascal}
-\end{thebibliography}
 
 %==============================================================================================
 
@@ -837,7 +815,7 @@ Carlo approach, BESSY-TB 177/93.
 \appendix
 
 
-\section{\label{appsexham} The sextupole Hamiltonian}
+\section{\label{appsexham} The sextupole Hamiltonian for many periods}
 For the first order sextupole modes the complex factor $a_N$ to transform the Hamiltonian
 mode for one period into N periods, i.e. $h^N = a_N\cdot h$ was derived by J.~Bengtsson in~\cite{jbthesis}:
 \beq
@@ -1185,7 +1163,7 @@ which is the center of motion for phase oscillations. Thus
 \beq
 \Delta_t \Delta E = eV \left( \sin(\phi+\phi_s)-\sin\phi_s \right)
 \eeq
-If there are harmonic cavities, we assume for simplicity, that the are at zero phase and all acceleration is done by the fundamental only; however this is an unnecessary restriction:
+If there are harmonic cavities, we assume for simplicity, that they are at zero phase and all acceleration is done by the fundamental only:
 \beq
 \Delta_t \Delta E = - \sum_{k=2}^n eV_k \sin (k\phi)
 \eeq
@@ -1224,7 +1202,7 @@ which are elliptic/hyperbolic if the product of the derivatives is negative/posi
 The hyperbolic fixpoints are the origins of the separatrices between stable and unstable areas.
 
 Practically, the longitudinal phase space is plotted by application of a contour plot program \cite{CONRECT} to the Hamiltonian. Fixpoints are obtained from a root finder, the characteristics from the derivatives at the roots. Finally separatrices are plotted as contours starting at hyperbolic fixpoints.
-\code{Bucket> CalcBucket}
+\code{opabucket> CalcBucket}
 
 
 
@@ -1582,252 +1560,43 @@ x'(s) & = & -\frac{K}{p}S(s)\, x_o + C(s)\, x_o' + S(s)\frac{h}{p}\,\delta \nonu
 \end{eqnarray}
 with $p=\sqrt{|K|}$, and $C(s)=\cos ps$ or $\cosh ps$, $S(s)=\sin ps$ or $\sinh ps$, for positive or negative $K$.
 
-
-
-
-\section{\label{appunits}List of OPA units}
-
-OPA is made from Free Pascal units \code{.pas} and Lazarus forms \code{.lfm} if the Pascal unit provides a GUI. Some units are ``frames'', i.e. components which are embedded in a GUI.
-Below names of the units are given with their approximate size, a list of used units and a short description of the function. The listing of units includes only the OPA units not the standard Lazarus units. Furthermore, a few image files \code{.ico, .bmp} are included to draw symbols on buttons.
-
-\subsection{General}
-
-\opamoduleN{opa.lpr}{(4.0k)}
-This is the main program, which allocates the Pascal units as listed below.\\
-
-\opamodule{opamenu.pas/.lfm}{(23.2k)}
-{OPAglobal, OPAEditor, TextEditor, OpticView, OPAChroma, OPACurrents, OPAmomentum, OPAGeometry, OPAtune, OPAtrackP, OPAtrackT, OPAtrackDA, OPAorbit, LGBeditor, Bucket, opatest}
-The main menu to read and write files, and to start the various calculations.\\
-
-\opamodule{OPAglobal.pas}{(140.7k)}{MathLib, ASaux}
-The largest unit containing definitions of global constants, types and variables and many procedures for the following tasks:
-\begin{mylist}
-\item Initialization of program \code{>GlobInit,OPAInit}.
-\item Set defaults for user settings, save and restore settings, \code{>DefReadFile...}
-\item Read a lattice file and build the internal structure of elements and segments, expand the nested segments structure recursively into the element line-up of a lattice, and write a lattice file, \code{>MakeLattice, WriteLattice}.
-\item Create, delete, compare elements, segments and variables; get and set parameters.
-\item Perform algebraic calculations using an adaptation of \cite{rosetta}.
-\item Miscellaneous type conversions.
-\item Status flags and Messages.
-\item Everything which did not fit elsewhere.
-\end{mylist}
-\todo{This unit grew large and heterogenous over the years and should be split up.}\\
-
-\opamodule{OPAElements.pas}{(82.6k)}{OPAglobal, MathLib;}
-A beam as defined by its orbit, (normal mode) beta functions, dispersion and coupling matrix is propagated through an element \code{>Driftspace,Quadrupole...}
-
-Internally the procedures \code{>MCC\_prop} and \code{>MBD\_prop} perform the transfer for coupling and non-coupling eleements.
-
-Depending on flags set, Kickers, non-linearities, misalignments etc. are switched on or off,  and radiation integrals, path length etc. are calculated.
-
-For display OPA subdivides elements in slices, where the slice length corresponds to one pixel on the screen. This is handled by the procedures \code{>slice...} defining matrices for the slices and for the skipped parts (i.e. out of view range) of the element.
-
-Internal private procedures calculate phase advances and transform between physical, normal modes and normalized normal mode coordinates.\\
-
-
-\opamoduleN{MathLib.pas}{ (55.6k)}
-This is a library of mathemical functions: definition of types and operations with vectors, matrices and complex numbers. It further contains some special functions, among them the Touschek integral function, and implementations of Powell's minimizer, LU decomposition and Singular Value Decomposition taken from \cite{numrec}, but extended to dynamic array size. OPA does not link external libraries (except the Lazarus libraries of course), but all algorithms needed are included in the code.
-
-
-\subsection{Editors}
-\opamodule{OPAEditor.pas/.lfm}{(9.7k)}{EdElCreate, EdElSet, EdSegSet, OPAGlobal, ASaux}
-The ``OPA Editor'' allows elements, variables and segments to be created and modified interactively. Global parameters like energy and default aperture can be set, and a comment may be added. Furthermore some convenience functions allow all dipoles to be inverted or undulators to be expanded into series of dipoles and drifts.\\
-
-\opamodule{EdElCreate.pas/.lfm}{(3.5k)}{EdElSet, EdSegSet, OPAGlobal}
-Create a new element from a dopdown list.\\
-
-\opamodule{EdElSet.pas/.lfm}{(28.4k)}{OPAglobal, OpticPlot, ASfigure, ASaux}
-Table to edit all parameters of an element or a variable. Some fields may contain algebraic expressions to calculate parameters from variables. This procedure is called in four different ways, for elements and for variables, and from editor or from optics design. For (iron dominated) magnets, a possible pole-profile is plotted \code{>PlotPro}.\\
-
-\opamodule{EdSgSet.pas/.lfm}{(11.9k)}{OPAglobal, ASaux}
-A table to set up or modify a segment, which is a line-up of elements and segments.\\
-
-\opamodule{texteditor.pas/.lfm}{(5.2k)}{OPAglobal}
-A simple Notepad-like text editor to edit the lattice file; used as an alternative to the interactive ``OPA Editor'' for the experienced user.\\
-
-\opamodule{LGBeditor.pas/.lfm}{(19.1k)}{OPAglobal,  MathLib, ASfigure, ASaux}
-\opamodule{LGBeditorLib.pas}{(13.9k)}{OPAglobal, ASfigure, ASaux}
-These two procedures optimize the field profile of a longitudinal gradient bend in order to minimize quantum excitation, i.e. the $I_5$ radiation integral. Magnet type, length, peak field and number of slices are set before starting a Powell minimizer. The first procedure is mainly the GUI and the minimizer, the second one contains physics and plotting.
-
-\subsection{Optics Design}
-
-\opamodule{OpticView.pas/.lfm}{(32.3k)}{OPAglobal, OpticPlot, Opticstart, OpticEnvel, OpticTune, OpticMatch, OpticWOMK, OPAtune, knobframe, EdElSet, Mathlib, VGraph, ASaux.}
-This is the main GUI for (linear) optics development. It contains procedures for initialization the form, for plotting, handlers for mouse events and GUI buttons.\\
-
-\opamodule{OpticPlot.pas}{(98.3k)}{OPAglobal, OPAElements, OPAtune, MathLib, ASfigure, VGraph, ASaux.}
-Linear beam optics includes closed orbit finder \code{>CloseOrbit}, periodic solution for coupled and uncoupled lattices \code{>NormalMode, FlatPeriodic}, propagation through elements \code{>Lattel} and full linear optics including integrals \code{>LinOp} with several options for periodic, symmetric, single pass forward, backward, from marker calculations \code{>OpticCalc}. Plot routines show beta functions and dispersions \code{>PlotBeta}, or orbit, envelopes and apertures \code{>PlotOrbit, PlotEnv, PlotApertures}, or magnetic fields \code{>PlotMag}. Lattice parameters are shown in a table \code{>FillBeamTab, FillBetaTab} and several output files can be printed \code{>Print...}\\
-
-\opamodule{Opticstart.pas/.lfm}{(17.3k)}{OPAglobal,  OpticPlot, MathLib, ASaux.}
-GUI to select the starting conditions for the optics solution, either periodic/symmetric, or from initial values for orbit, beta functions, dispersion and coupling given at the start or end of lattice or at an intermediate optics marker.\\
-
-\opamodule{OpticEnvel.pas/.lfm}{(9.9k)}{OPAglobal,  OpticPlot, ASaux.}
-Select the plot mode to show beta functions (normal mode and/or projected) and dispersions, envelopes with orbit and apertures or magnetic fields. Several parameters may be set, e.g. the reference radius to calculate magnetic fields etc.\\
-
-\opamodule{OpticTune.pas/.lfm}{(6.1k)}{OPAglobal,  OpticPlot, MathLib, ASaux.}
-Calculates a $2\times 2$ matrix how the tunes depend on a scaling factor applied to all focusing and defocusing quads and allows the working point to shifted this way.\\
-
-\opamodule{OpticWOMK.pas/.lfm}{(2.5k)}{OPAglobal,  OpticPlot.}
-Asks whether an optics solution should be stored in the optics markers.\\
-
-\opamodule{OpticMatch.pas/.lfm}{(42.0k)}{OPAglobal, OpticPlot, OpticMatchScan, Knobframe, ASfigure, ASaux.}
-Matching of linear optics using a Newton-Raphson minimizer: Optics parameters to be adjusted with target values and at least the same number of knobs (e.g. quadrupole strenght, variables etc.) are selected, then the minimizer proceeds using the square matrix of most sensitive knobs, which is recalculated after each steps to take into account non-linearities. Reduced step size can be set for better convergence. It is possible to run a scan over some range of a target value.\\
-\todo{The matching procedure is quit old and restricted to uncoupled lattices. A more elaborate minimizer also including limits for the knobs should be implemented.}\\
-
-\opamodule{OpticMatchScan.pas/.lfm}{(2.9k)}{OPAglobal,  OpticPlot, ASaux.}
-This is just a GUI to enter the range for a target function to run a scan.\\
-
-\opamodule{knobframe.pas}{(11.5k) [Frame] }{OPAglobal, OpticPlot, Mathlib, ASaux.}
-The frame provides a knob to control a parameter (quad strength, variable value etc.) including limits and a reset function. A numner of knob frames is embedded in the GUI \code{OpticView, OPAOrbit} as space permits. Knob actions trigger calculations and plots. Knobs may be passive, if the quantity is controlled by a variable connected to another knob. Therefore a knob has to know his fellow knobs and trigger their updates \code{>BrotherHandles}\\
-
-\opamodule{OPAtune.pas/.lfm}{(15.9k)}{OPAglobal, ASfigure, ASaux.}
-GUI window to show a tune diagram: resonances up to selected orders and the working point, a line or a group of tune points is shown in the diagram. This procedure is used in linear optics to show the working point or it variation with momentum, in non-lineare optics to show a predictions for the tune footprint and in tracking to show the tracked tune footprint.\\
-
-\opamodule{OPAorbit.pas/.lfm}{(73.0k)}{OPAglobal, OpticPlot,  OpticStart, Knobframe, MathLib, ASfigure, ASaux.}
-This unit calculates the beam orbit. It is used to either study orbit distortion and correction (usually in periodic mode) or to study injection (usually in forward mode)~-- a corresponding flag is set at start. Most procedureds in the unit are used to set up the rather complex GUI with knobs for correctors, kickers and BPMs and various panels for orbit correction, plotting or injection studies.
-
-In orbit mode, correlated misalignments are applied, the response matrix is calculated and pseudo-inverted using an SVD procedure in order to correct the orbit. A loop function may run several error seeds to obtain some statistics.
-
-In injection mode, kickers may be synchronized for correct timing, and the injected (and/or stored) beam trajectory is calculated for a few turns.
-
-In both modes, when leaving the unit, results for misalignments and corrector settings, or for kicker settings, are saved internally and will be used in subsequent linear optics calculations or tracking.
-
-\todo{There are problems with misalignments in tracking, not yet solved.}
-
-Note, that correctors and BPMs defined with reserved names {\tt CH,CV,MON} in the lattice file are internally expanded to a set of individual elements, e.g. {\tt CH001...} when unpacking the lattice \code{OPAGlobal>MakeLattice}.
-
-\subsection{Longitudinal optics}
-OPA does not contain true longitudinal dynamics, i.e. all calculations are for fixed momentum offset, and tracking proceeds only in 4-D, not in 6-D. There are no cavities and no acceleration.
-
-\opamodule{OPAmomentum.pas/.lfm}{(26.8k)}{OPAglobal, OpticPlot, ASfigure, OPAtune, MathLib, ASaux.}
-\opamodule{MomentumLib.pas}{(16.5k)}{OPAglobal, OpticPlot, ASfigure, OPAtune, MathLib, ASaux.}
-These two procedures calculate linear optics (periodic or forward) for some momentum range, show the results and apply a polynomial fit. The first procedure mainly controls the GUI, the second one is for calculation and plotting.
-Results to fit and show are selected in the GUI. Results for path length are saved internally to be used when plotting the bucket (see next unit). Tune results are shown in a tune diagram.
-
-\todo{A Powell minimizer was implemented once for a special purpose (non-linear bunch compressor study): it takes selected multipoles as knobs to adjust a momentum dependent function (e.g. $X(\delta)$) to a target function. However this implementation was ``quick and dirty'' and may be removed again.}\\
-
-
-\opamodule{Bucket.pas/.lfm}{(19.4k)}{OPAglobal, ASfigure, MathLib, Conrect, ASaux.}
-The RF bucket is calculated based on up to five orders of momentum compaction and RF harmonics as described in Appendix \ref{appbucket}, \code{>CalcBucket}, and a contour plot of equipotentials and the separatrix is shown.
-
-The coefficients for momentum compaction may be taken over from the previous unit on momentum dependent optics. The estimates for momentum acceptance and bunch length are saved for re-use in the Touschek tracking unit (see below).\\
-
-\subsection{Non-linear Optimization}
-Non-linear optimization uses a penalty function composed from a fixed set of Hamiltonian modes on one side, which are controlled by a variable set of sextupoles and octupoles on the other side.
-The dependencies are complicated, if the two minimizers are running (Powell for first and second order sextupole terms, SVD for first order octupole terms), or if chromaticity is automatically adjusted, or if target values for the (non-resonant) Hamiltonian modes are changed. This requires to pass handles from the GUI program \code{OPAChroma} to the frames for the Hamiltonian modes and the multipoles, \code{>CSexLine, CHamLIne} and between these. In order to avoid circular dependencies, two intermediate layers \code{>ChromGUILib1,2} were introduced.
-
-\todo{The nested handles are rather messy. It works, but could be entangled and simplified.}\\
-
-\opamodule{OPAChroma.pas/.lfm}{(40.2k)}{OPAglobal, ChromLib, ChromGUILib1, ChromGUILib2, CHamLine, CSexLine, OPAChromaSVector, OPAtune, MathLib, ASfigure, ASaux.}
-Initialization of the GUI, allocating the frames for Hamiltonians and multipoles and passing all the handles between, \code{>Start} and dimensioning of the GUI \code{>ResizeAll}.
-Set up (and start) the Powell minimizer for the sextupoles \code{>ButMinClick} and set up the SVD-minimizer for the octupoles \code{>ChkOctClick}.\\
-
-\opamodule{ChromLib.pas}{(60.2k)}{OPAglobal, OpticPlot, OPAElements, OPAtune,  MathLib, Vgraph, ASaux.}
-The physics part: at start, all kicks from sextupole, octupole, combined function bend (and decapole) families are collected, and matrices are set up to get the Hamiltonian modes from the $M_{\rm sx}$ sextupole and $M_{\rm oc}$ octupole families. These are a $10\times  M_{\rm sx}$ matrix for first order sextupole, a $11\times  M_{\rm sx}^2$ matrix for the second order sextupole, and a  $13\times  M_{\rm oc}$ for first order octupole. Matrix elements are sums over optical functions at all kicks (thick sextupoles contain several kicks). Quadrupoles contribute to chromatic modes and are included as a constant offset vector. These calculations are rather time consuming but only done once at start \code{>ChromInit, S\_Matrix}. Hamiltonian modes are calculated for the lattice structure considered as one period. In order to get the results for many periods, complex multiplication factors are required as described in Appendix \ref{appsexham} \code{>S\_Period}.
-
-Chromaticity up to third order is calculated from numerical differentiation \code{>ChromDiff}. Hamiltonian modes are calculated from multipole settings using the pre-calculated matrices and weight factors entered manually in order to visualize the results and combine them into a single, scalar penalty function, see Eq.\ref{eqpenal} \code{>Driveterms}. Chromaticity is corrected with two selected sextupole families using a simple $2\times 2$ matrix \code{>UpdateChromMatrix, GetLinChroma, ChromCorrect}.
-
-For the octupole matrix a SVD decomposition is performed for correction of the second order sextupole terms which are first order octupole terms. The SVD weight vector is provided for filtering, since usually a ``hard'' correction using all weights does not work well \code{>Oct\_SVDCMP}.
-Decapoles affect only the third order chromaticities. Other third order effects are not included.\\
-
-\opamodule{ChromGUILib1.pas}{(1.9k)}{ChromLib, CHamLine.}
-This small piece of code is mainly for passing handles to the\code{>CHamLine} frames.\\
-
-\opamodule{ChromGUILib2.pas}{(2.7k)}{ChromLib}
-Pass handles to the octupole SVD functions in order to enable automatic execution during minimization, and filters the SVD weight factors.\\
-
-\opamodule{CHamLine.pas/.lfm}{(10.7k) [Frame]}{OPAglobal, ChromLib, ChromGUILib2, CSexLine, ASaux.}
-25 of these frames are embedded in the GUI at start. They display the results for the 25 Hamiltionian modes and allow weight and target values to be set. A change of target or weight triggers an update of the calculations \code{>UpdateWeight, UpdateTarget}. Changing any multipole manually or by the minimizer of course changes these frames.\\
-
-\opamodule{CSexLine.pas/.lfm}{(11.9k) [Frame]}{OPAglobal, ChromLib, ChromGUILib1, ChromGUILib2, OPAChromaSVector, ASaux.}
-At start, one of these frames is embedded in the GUI for each family of sextupole, octupole, decapole and combined function bend. It provides a knob for the magnet strength. Changing it triggers a calculation of the Hamiltonian modes. If the minimizer is running, the strength field has to follow \code{>UpdateVal...}\\
-
-\opamodule{OPAChromaSVector.pas/.lfm}{(3.3k)}{OPAglobal, ChromLib, MathLib, ASfigure.}
-Opens a small window to visualize the first order sextupole modes in the complex plane.
-
-
-\subsection{Tracking}
-Tracking is performed in unit {\tt TrackLib}, used by the three GUIs for phase space, dynamic aperture and Touschek tracking:
-
-\opamodule{OPAtrackP.pas/.lfm}{(44.8k)}{OPAglobal,  OPAtune, TrackLib, MathLib, Vgraph, ASfigure, ASaux.}
-Phase space tracking: the GUI contains four plot windows for the transverse phase spaces and Fourier spectra, and several panels for different options. Single particles are started from coordinates entered manually in edit fields or passed from {\tt ASfigure} mouse events \code{>ButRunClick}. For amplitude dependent tune shifts (ADTS) particle start coordinates are stepped up to aperture limits \code{>ButTushClick}. For simulation of injection, a beam ellipse populated with many particles can be tracked \code{>StartEnsemble, ButBeamRunClick, TrackBeam}. Most of the unit contains event handlers and plot routines.\\
-
-\opamodule{OPAtrackDA.pas/.lfm}{(30.9k)}{OPAglobal,  OPAtune, TrackLib, MathLib, Vgraph, ASfigure, ASaux.}
-Dynamic aperture tracking: particles are started on a grid covering the area $(x,y)$, $(x,\delta)$ or $(y,\delta)$. The grid is successively refined to get an early impression \code{>gridSetup}. Physical apertures are calculate by projecting all apertures to the trackpoint \code{>Silhouette}. The other procedures are for event handling and plotting.\\
-
-\opamodule{OPAtrackT.pas/.lfm}{(45.7k)}{OPAglobal,  OPAtune, TrackLib, OpticPlot, MathLib, Vgraph, ASfigure,ASaux.}
-Touschek tracking: Lifetime is calculated as described in Appendix \ref{apptous} from bunch volume and momentum acceptance (MA). The MA is the minimum of the linear MA given by the beam pipe apertures \code{>CalcMALin}, of the RF-MA which is derived from input parameters or has been calculated previously by {\tt Bucket}, and of the dynamic MA obtained from tracking and binary search for min./max. stable momentum offset \code{>MADyn, Trackdbins, TrackLat}.
-
-The bunch volume is calculated from the periodic optics solution with its emittance and energy spread \code{>CalcSigma}.
-
-The GUI has two panels for several input values affecting lifetime and for derived values \code{>Output}.
-
-Coulomb lifetime is calculated from the effective acceptance, hower this includes only the physical, not the dynamic aperture limits \code{>CalcAccEL}. Bremsstrahlung lifetime uses the negative MA as used for Touschek lifetime too. Total lifetime is given as the inverse of the sum of the loss rates \code{>CalcLifetime}.\\
-
-\opamodule{TrackLib.pas}{(46.2k)}{OPAglobal, OpticPlot, OPAElements, MathLib;}
-At start, all linear elements are concatenated to matrices alternating with non-linear (or time dependent) kicks in order to speed up tracking \code{>TrackinMatrix}. Physical acceptances are calculated either from element apertures or from given apertures to estimate the maximum range for tracking \code{>Acceptances}. Both calculations have to be re-done when changing the reference momentum \code{>Init\_dpp}.
-The available aperture in the $(x,y)$-plane is calculated for a set of rays to obtain the silhouette, i.e. projection of beam pipe apertures to the trackpoint as described in Appendix \ref{appgeoa} \code{>AmpKappa}. Optics parameters at the Trackpoint are calculated, which may be located anywhere, even inside an element \code{>TrackPoint}.
-
-Tracking proceeds turn by turn at fixed momentum \code{>OneTurn} (or with changing momentum based on a simple model of synchtron oscillation \code{>OneTurn\_S}). Tracking one turn proceeds by repeated application of the matrix for a series of linear elements, followed by a non-linear (or time dependent) kick and a check for particle loss \code{>TMatKick}.
-
-The procedures in the last third of the unit (from {\tt SineWindow} to the end) are for signal processing, to calculate the FFT, interpolate frequencies and guess the related resonances.\\
-
-\subsection{Lattice Layout}
-\opamodule{OPAGeometry.pas/.lfm}{(63.2k)}{OPAglobal, OpticPlot, MathLib, ASaux.}
-This unit displays the lattice layout, peforms geometric matching and exports various files.
-The orbit is calculated in 3D-space from element lengths, deflection and rotation angles \code{>CalcOrbit}. The orbit as curve in space is rotated and translated depending on the initial conditions \code{>setDrawMode}.
-The elements are made from faces, i.e. polygons in 3D-space \code{>CalcFaces}, which become polygons when projected to 2D-space of the image plane \code{>CalcPoly}. Changing the initial conditions does not change the faces themselves but applies the same translationa and rotation to all of them \code{>TransPoly}.
-
-\todo{Up to now the elements are ``flat'', i.e. represented by a face of some length and width in the midplane. If changing the initial angle, they look ugly. It would be straightforward to define boxes made from several faces, however this would also require some rendering algorithm for 3D-display.}
-
-Several files can be exported, among them a \code{.geo} file of polygons \code{>butListClick}, which can also be read \code{>ReadFiles} in order to show several lattice structures in one plot.
-
-Geometric matching looks for lattice variables with names starting with ``G'', which control lengths and deflection or rotation angles of elements (in \code{>Start}) and runs an SVD minimizer to adjust the final (or initial) coordinates and angles of the lattice structure to a target value \code{>butMatchClick}.
-
-\todo{Geometric matching works but is not well implemented yet. More checks are required, and also an ``undo'' button should be added.}
-
-
-\subsection{Temporary}
-\opamodule{OPACurrents.pas/.lfm}{(10.3k)}{OPAglobal, ASaux.}
-This unit calculates magnet currents using two tables for allocation (i.e. hardware type of the magnet in the lattice) and magnet calibration, which may be read with the lattice in \code{OPAGlobal> ReadAllocation, ReadCalibration}. Calculating the current from the strength parameters and v.v. is done in \code{OPAGlobal> getIfromK, getKfromI}. Due to non-linearity of the calibration curve, a bisection root finder is used \cite{numrec}.
-
-The {\tt OPACurrents} unit provides a GUI and writes a {\tt .snap} file to be read by the storage ring control system. Among other data, this file also includes the matrices for tune change, if previously calculated by \code{OpticTune}, and for chromaticity change, calculated by \code{ChromLib> UpdateChromMatrix}.
-
-\todo{The current calculation should be done here, not in {\tt OPAGlobal}.}\\
-
-
-\opamodule{opatest.pas}{(37.3k)}{OPAglobal, OpticPlot, MathLib, ASaux.}
-This unit is for temporarily needed procedures or for testing new stuff, which then, if it works well, is moved to another place.
-
-In the present (\today) version the unit contains, among others, three procedures for reading MAD {\tt .mad}, MAD sequence {\tt .seq} and ELEGANT {\tt .lte} files. The procedures are yet incomplete but nevertheless facilitate reading these files.\\
-
-
-\subsection{Graphics and little helpers}
-
-%\opamoduleN{Fgraph.pas}{(10.8k)}
-%This unit for floating point graphics is only used by {\tt OpticView}. At start it is given a canvas handle for subsequent plot actions.
-%
-%\todo{All other OPA units use the more modern and powerful {\tt VGraph} and {\tt ASfigure} graphics units. {\tt FGraph} is only present for historical reasons, and because {\tt OpticView} uses some special plot and mouse actions. {\tt OpticView} should be adapted to {\tt VGraph}, and {\tt FGraph} should be eliminated.}\\
-
-These units are not in the OPA folder, because they are of more general use and part of other projects too:\\
-
-\opamodule{..ASfigure.pas/.lfm}{(9.9k) [Frame]}{Vgraph, ASAux.}
-This frame provides a paintbox (i.e. a plot window) to be embedded in a GUI and a {\tt Vplot}-object as defined in {\tt VGraph}. Added functionality includes handles to Edit fields in order to translate mouse actions to numbers (used in {\tt OPATrackP}) \code{>PassEditHandle..} \\
-
-\opamoduleN{..Vgraph.pas}{(25.1k)}
-This unit defines a canvas-based object with many public procedures for floating point graphics.
-On creation it receives a canvas handle (for example, the canvas of the {\tt ASfigure}-paintbox) \code{>Create}.
-Some plot procedures wrap standard methods from the Lazarus {\tt Graphics} unit but use floating point numbers instead of integers.
-Other plot procedures provide extended functionality, for example plotting a (phase space) ellipse \code{>Ellipse} or drawing ``nice'' axes \code{>Axis}.\\
-
-\opamoduleN{..Conrect.pas}{(14.4k)}
-Calculation of contour lines for a 2D-array of data \cite{CONRECT}.\\
-
-\opamoduleN{..ASaux.pas}{(7.9k)}
-A collection of ``little helpers'' for formatting, string operations, reading edit fields and dimming colors. It also includes an index sort algorithm.\\
-
-%\section{Approximative calculation of path length}
-
-
+\begin{thebibliography}{18}
+\bibitem{opadocu}OPA-4 code documentation, January 2026, \\
+\biburl{https://github.com/opa-code/opa4-documentation/blob/main/opadocu.pdf}.
+\bibitem{VZAS}V. Ziemann and A. Streun, Equilibrium parameters in coupled storage ring lattices and practical applications, Phys. Rev. Accel. Beams, 25, 050703, 2022. \biburl{https://link.aps.org/doi/10.1103/PhysRevAccelBeams.25.050703}.
+\bibitem{cs}E.D.Courant \&\ H.S.Snyder, Theory of the alternating gradient synchrotron, Ann. Phys. 3,1(1958).\\
+ \biburl{http://ab-abp-rlc.web.cern.ch/ab-abp-rlc/AP-literature/Courant-Snyder-1958.pdf}
+\bibitem{es}D.A.Edwards \&\ M.J.Syphers, An Introduction to the physics of high energy accelerators, Wiley-VCH, 1992.
+\bibitem{ef}E.Forrest, Beam Dynamics, Harwood Academic Publishers, Amsterdam 1998.
+\bibitem{rees}J.R.Rees, Symplecticity in beam dynamics, SLAC-PUB 9939, 2003.\\
+ \biburl{http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-9939.pdf}
+\bibitem{ruth}R.D.Ruth, Single particle dynamics in circular accelerators, SLAC-PUB 4103, 1986.\\
+ \biburl{http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-4103.pdf}
+\bibitem{EDTENG} D. Edward and L.Teng, {\em Parametrization of linear coupled motion in periodic
+systems,} IEEE Trans.Nucl.Sci. 20, 885 (1973).
+\bibitem{SAGAN}D. Sagan, D. Rubin, {\em Linear Analysis of coupled lattices,} Physical Review Special
+Topics--Accelerators and Beams 2 (1999) 074001.
+%\bibitem{lgb}A. Streun and A. Wrulich, Compact low emittance light sources based on longitudinal gradient bending magnets, NIM A 770 (2015) 98-112.
+\bibitem{wille}K. Wille, Physik der Teilchenbeschleuniger und Synchrotronstrahlungsquellen, Teubner Studienb\"{u}cher, Stuttgart 1992.
+\bibitem{bruck}H. Bruck, Circular Particle Accelerators, Los Alamos 1966, LA-TR-72-10.
+\bibitem{zap}M. Zisman et al., ZAP user's manual, Berkeley 1986, LBL-21270.
+\bibitem{sls1897}A. Streun, Momentum acceptance and Touschek lifetime, SLS-Note 18/97.
+\bibitem{khan}S. Khan, Simulation of the Touschek effect for Bessy II -- a Monte
+Carlo approach, BESSY-TB 177/93.
+\bibitem{asaa06}\AA. Andersson and A. Streun, Lifetime and acceptance of the SLS storage ring, EPAC-2006, Edinburgh, THPLS060, p.3421.
+\bibitem{jbthesis}J. Bengtsson, Non-linear transverse dynamics, CERN-88-05.
+\bibitem{jbsls}J. Bengtsson, The sextupole scheme for the SLS, SLS-Note 9/97,  \biburl{http://slsbd.psi.ch/pub/slsnotes/sls0997.pdf}
+\bibitem{WANG}Chun-xi Wang, Explicit formulas for 2nd-order driving terms due to sextupoles and chromatic effects of quadrupoles, ANL/APS/LS-330, 2012%, %    \url{https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-sync/lsnotes/files/APS_1429490.pdf}
+\bibitem{SLAS}S. C. Leemann and A. Streun, Perspectives for future light source lattices incorporating yet uncommon magnets, Phys. ST Rev. Accel. Beams, 14, 030701, 2011.
+\bibitem{numrec}W. H. Press et al., Numerical Recipes in Pascal, Cambridge 1989.
+\bibitem{Brown}K. L. Brown, A first- and second-order matrix theory, Stanford 1967, SLAC-75.
+\bibitem{HANDBOOK}A.W.Chao, M.Tigner, Handbook of accelerator physics and engineering, Singapore 1998.
+\bibitem{FTTpaper}B. Riemann, M. Aiba, J. Kallestrup, A. Streun, Efficient algorithms for dynamic aperture and momentum acceptance calculation in synchrotron light sources, Phys. Rev. Accel. Beams, 27, 094002,2024, \biburl{https://doi.org/10.1103/PhysRevAccelBeams.27.094002}.
+\bibitem{wiedemann}Wiedemann
+\bibitem{CONRECT}\biburl{http://paulbourke.net/papers/conrec/}
+\bibitem{ATKINSON}T. Atkinson et al., Development of a non-liner kicker system\dots , IPAC-2011, San Sebastian, THPO024, p.3394
+\bibitem{rosetta}\biburl{http://rosettacode.org/wiki/Arithmetic\_Evaluator/Pascal}
+\end{thebibliography}
 
 
 \end{document} 
